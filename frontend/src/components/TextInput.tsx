@@ -22,7 +22,7 @@ const TextInput: React.FC<TextInputProps> = ({ value, onChange }) => {
         placeholder="普通の投稿を入力してください..."
         maxLength={maxLength}
         aria-label="テキスト入力"
-        className="w-full h-32 p-4 border-2 border-gray-300 rounded-lg focus:border-fire-500 focus:outline-none resize-none transition-colors"
+        className="w-full h-32 p-4 border-2 border-gray-300 rounded-lg focus:border-fire-500 focus:outline-none resize-none transition-colors text-gray-900 placeholder:text-gray-400"
         rows={5}
       />
       <div className="flex justify-end mt-2">
