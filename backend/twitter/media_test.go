@@ -38,6 +38,7 @@ func TestUploadMedia(t *testing.T) {
 				apiSecret:         "test-api-secret",
 				accessToken:       "test-access-token",
 				accessTokenSecret: "test-access-token-secret",
+				mockMode:          true,
 			}
 
 			ctx := context.Background()
@@ -119,6 +120,7 @@ func TestPostTweetWithMediaID(t *testing.T) {
 				apiSecret:         "test-api-secret",
 				accessToken:       "test-access-token",
 				accessTokenSecret: "test-access-token-secret",
+				mockMode:          true,
 			}
 
 			ctx := context.Background()
@@ -202,6 +204,7 @@ func TestPostTweetWithImage(t *testing.T) {
 				apiSecret:         "test-api-secret",
 				accessToken:       "test-access-token",
 				accessTokenSecret: "test-access-token-secret",
+				mockMode:          true,
 			}
 
 			ctx := context.Background()

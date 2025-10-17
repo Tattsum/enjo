@@ -1,272 +1,149 @@
-# 🚀 クイックスタートガイド
+# クイックスタートガイド
 
-炎上シミュレーターを5分で起動する手順です。
+最速でローカル環境を起動する手順です。
 
-## 📋 前提条件
+## ✅ 前提条件チェック
 
-- ✅ Docker Desktop がインストール・起動済み
-- ✅ Git がインストール済み
-- ✅ gcloud CLI がインストール済み（[インストール手順](https://cloud.google.com/sdk/docs/install)）
-- ⚠️ GCP プロジェクトと認証設定（後述）
+すでに以下が設定済みです：
+- ✅ `backend/.env` ファイルが存在
+- ✅ `backend/application_default_credentials.json` が存在
+- ✅ Docker & Docker Compose がインストール済み
 
-## 🏃 最速起動手順
+## 🚀 起動手順（3ステップ）
 
-### 1. リポジトリをクローン
-
-```bash
-# GitHubからクローン
-git clone https://github.com/Tattsum/enjo.git
-cd enjo
-```
-
-### 2. GCP認証情報を設定
-
-Application Default Credentials (ADC) を取得します：
+### 1. 環境変数の確認
 
 ```bash
-# GCPにログイン
-gcloud auth login
-
-# Application Default Credentialsを取得
-gcloud auth application-default login
-
-# 認証情報ファイルをプロジェクトにコピー
-cp ~/.config/gcloud/application_default_credentials.json backend/
+# GCP_PROJECT_ID が正しく設定されているか確認
+cat backend/.env | grep GCP_PROJECT_ID
 ```
 
-### 3. 環境変数ファイルを設定
+**期待される出力:**
+```
+GCP_PROJECT_ID=your-actual-project-id
+```
 
-`backend/.env` を編集してGCPプロジェクトIDを設定：
+もし `your_gcp_project_id_here` のままなら、実際のプロジェクトIDに変更してください：
 
 ```bash
-# エディタで開く
-nano backend/.env
+# プロジェクトIDを確認
+gcloud config get-value project
+
+# .env を編集
+vi backend/.env  # または好きなエディタ
 ```
 
-以下を確認・編集：
-
-```env
-GCP_PROJECT_ID=your-project-id  # ← あなたのGCPプロジェクトIDに変更
-GCP_LOCATION=us-central1
-PORT=8080
-```
-
-フロントエンドの環境変数も設定（既に存在する場合はスキップ）：
+### 2. Docker起動
 
 ```bash
-cp frontend/.env.local.example frontend/.env.local
-```
-
-### 4. Vertex AI APIを有効化
-
-```bash
-# あなたのプロジェクトIDを設定
-export PROJECT_ID="your-project-id"
-
-# Vertex AI APIを有効化
-gcloud services enable aiplatform.googleapis.com --project=$PROJECT_ID
-```
-
-### 5. Docker Composeで起動
-
-```bash
-# すべてのサービスを起動（初回は5-10分かかります）
+# プロジェクトルートで実行
 docker-compose up --build
 ```
 
-または、バックグラウンドで起動：
+**初回起動は5-10分程度かかります**（依存パッケージのインストール）
+
+起動完了のログ:
+```
+frontend_1  | ✓ Ready in 2.5s
+frontend_1  | - Local:        http://localhost:3000
+backend_1   | Server is running on http://localhost:8080
+```
+
+### 3. ブラウザでアクセス
+
+http://localhost:3000 を開く
+
+## 🎨 画像生成機能を試す
+
+1. **テキスト入力**
+   ```
+   今日のランチは最高でした！
+   ```
+
+2. **炎上度を選択**（スライダー: 3）
+
+3. **「🔥 炎上化する」をクリック**
+   - 炎上テキストが生成される
+
+4. **「🎨 画像を生成」をクリック**（新機能！）
+   - スタイルを選択（ミーム風/リアル調など）
+   - 「🎨 画像を生成」ボタンをクリック
+   - **5-15秒で画像が生成されます**
+
+5. **生成された画像を確認**
+   - ダウンロード可能
+   - 再生成も可能
+   - Twitter投稿も可能（認証情報設定済みの場合）
+
+## 💰 コスト注意
+
+画像生成は実際のVertex AI APIを使用します：
+- 1回の生成: 約$0.02（512x512）
+- 10回の生成: 約$0.20
+- 開発中は小さいサイズを推奨
+
+## 🛑 停止方法
 
 ```bash
-docker-compose up --build -d
-```
-
-### 6. アクセス
-
-ブラウザで以下のURLを開いてください：
-
-- **フロントエンド**: http://localhost:3000
-- **GraphQL Playground**: http://localhost:8080/graphql
-- **バックエンド ヘルスチェック**: http://localhost:8080/health
-
----
-
-## 🧪 動作確認
-
-### 1. ヘルスチェック
-
-```bash
-curl http://localhost:8080/health
-```
-
-期待される出力：
-```json
-{"status":"OK"}
-```
-
-### 2. GraphQL クエリ
-
-```bash
-curl -X POST http://localhost:8080/graphql \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ health }"}'
-```
-
-期待される出力：
-```json
-{"data":{"health":"OK"}}
-```
-
-### 3. フロントエンド確認
-
-ブラウザで http://localhost:3000 を開いて：
-
-1. テキストエリアに「今日はいい天気ですね」と入力
-2. 炎上レベルを「3」に設定
-3. 「🔥 炎上化する」ボタンをクリック
-4. 変換結果が表示されるか確認
-
----
-
-## 🛑 停止・クリーンアップ
-
-### サービスを停止
-
-```bash
-# 停止（コンテナは保持）
-docker-compose stop
-
-# 停止して削除
+# Ctrl+C で停止、または別ターミナルで
 docker-compose down
-
-# ボリュームも含めて完全削除
-docker-compose down -v
 ```
 
-### ログ確認
+## 🔧 トラブルシューティング
+
+### 画像生成エラーが出る場合
+
+1. **GCP_PROJECT_IDを確認**
+   ```bash
+   cat backend/.env | grep GCP_PROJECT_ID
+   ```
+
+2. **Vertex AI APIが有効か確認**
+   ```bash
+   gcloud services list --enabled | grep aiplatform
+   ```
+
+   有効でない場合:
+   ```bash
+   gcloud services enable aiplatform.googleapis.com
+   ```
+
+3. **Dockerを再起動**
+   ```bash
+   docker-compose restart backend
+   ```
+
+### ポート競合エラー
 
 ```bash
-# すべてのログ
-docker-compose logs -f
-
-# バックエンドのみ
-docker-compose logs -f backend
-
-# フロントエンドのみ
-docker-compose logs -f frontend
-```
-
----
-
-## 🐛 トラブルシューティング
-
-### ポートが使用中
-
-```bash
-# 既に8080ポートが使われている場合
+# 使用中のプロセスを確認
+lsof -i :3000
 lsof -i :8080
 
-# または3000ポート
-lsof -i :3000
-
-# プロセスを停止してから再起動
+# Docker再起動
+docker-compose down
+docker-compose up
 ```
 
-### Dockerビルドエラー
+### 初回起動が遅い
 
-```bash
-# キャッシュをクリアして再ビルド
-docker-compose build --no-cache
+- 正常です！依存パッケージのインストールに時間がかかります
+- 2回目以降は高速です
 
-# イメージを削除して再作成
-docker-compose down --rmi all
-docker-compose up --build
-```
+## 📚 詳細ドキュメント
 
-### 認証エラー
+- [詳細なセットアップガイド](LOCAL_SETUP.md)
+- [画像生成機能の詳細](docs/FEATURE_IMAGE_GENERATION.md)
+- [統合テストの実行方法](backend/INTEGRATION_TEST_README.md)
 
-ブラウザのコンソールまたはバックエンドログで以下を確認：
+## ✨ 次のステップ
 
-```bash
-docker-compose logs backend | grep -i "vertex\|gcp\|auth"
-```
-
-エラー例：
-
-- `GCP_PROJECT_ID is required` → .envファイルのプロジェクトIDを確認
-- `Failed to create Vertex AI client` → ADC認証情報を確認
-- `application_default_credentials.json: no such file` → 手順2の認証情報コピーを実行
-- `Permission denied` → GCPプロジェクトでVertex AI APIが有効か確認
-
-### ADC認証情報の再取得
-
-認証エラーが続く場合：
-
-```bash
-# 再度ADCを取得
-gcloud auth application-default login
-
-# 認証情報を再コピー
-cp ~/.config/gcloud/application_default_credentials.json backend/
-
-# Dockerサービスを再起動
-docker-compose restart backend
-```
+画像生成が成功したら：
+1. 異なるスタイルを試す
+2. 炎上度を変えて再生成
+3. コードを確認（TDD実装済み！）
+4. テストを実行して理解を深める
 
 ---
 
-## 📚 次のステップ
-
-### 開発者向け
-
-- [PROJECT_RULES.md](../PROJECT_RULES.md) - TDD開発ルール
-- [README.md](../README.md) - 詳細なドキュメント
-
-### テストを実行
-
-```bash
-# すべてのテスト
-make test
-
-# バックエンドのみ
-make backend-test
-
-# フロントエンドのみ
-make frontend-test
-```
-
-### コードチェック
-
-```bash
-# すべてのチェック（フォーマット、Lint、テスト）
-make check
-
-# バックエンドのみ
-make backend-check
-
-# フロントエンドのみ
-make frontend-check
-```
-
----
-
-## 💡 ヒント
-
-- **初回起動は時間がかかります**: 依存関係のダウンロードに5-10分かかることがあります
-- **ホットリロード対応**: コードを変更すると自動的に再読み込みされます
-- **認証情報の管理**: `application_default_credentials.json` は機密情報です。Gitにコミットしないでください（.gitignoreで除外済み）
-- **Vertex AI料金**: 無料枠がありますが、使用量に応じて課金される場合があります。[料金ページ](https://cloud.google.com/vertex-ai/pricing)を確認してください
-- **教育目的での使用**: 実際のSNSでの悪用は厳禁です
-
----
-
-## 🆘 サポート
-
-問題が発生した場合：
-
-1. [Issues](https://github.com/Tattsum/enjo/issues) で既知の問題を検索
-2. 新しいIssueを作成して質問
-3. ログを確認: `docker-compose logs -f`
-
----
-
-**Have Fun! 🔥**
+**問題が発生した場合:** [LOCAL_SETUP.md](LOCAL_SETUP.md) のトラブルシューティングセクションを参照

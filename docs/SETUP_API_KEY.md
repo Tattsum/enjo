@@ -1,8 +1,18 @@
-# Gemini API キー取得方法
+# API キー取得とセットアップ方法
 
-このドキュメントでは、gcloud コマンドを使用して Gemini API キーを取得し、環境変数として設定する方法を説明します。
+このドキュメントでは、Enjo Simulatorで使用するAPI（Gemini、Imagen、Twitter）のセットアップ方法を説明します。
 
-## 前提条件
+## 目次
+
+1. [Gemini API (Generative Language API)](#gemini-api-generative-language-api)
+2. [Imagen API (Vertex AI)](#imagen-api-vertex-ai)
+3. [Twitter API](#twitter-api)
+
+---
+
+## Gemini API (Generative Language API)
+
+### 前提条件
 
 - Google Cloud SDK (gcloud) がインストールされていること
 - Google Cloud プロジェクトが作成されていること
@@ -172,8 +182,187 @@ gcloud projects get-iam-policy YOUR_PROJECT_ID
    gcloud secrets versions access latest --secret="gemini-api-key"
    ```
 
+---
+
+## Imagen API (Vertex AI)
+
+画像生成機能に使用するImagen APIのセットアップ方法です。
+
+### 前提条件
+
+- Google Cloud SDK (gcloud) がインストールされていること
+- Google Cloud プロジェクトが作成されていること
+- プロジェクトで課金が有効化されていること
+
+### 手順
+
+#### 1. Vertex AI API の有効化
+
+```bash
+# Vertex AI API を有効化
+gcloud services enable aiplatform.googleapis.com
+
+# 有効化を確認
+gcloud services list --enabled | grep aiplatform
+```
+
+#### 2. Application Default Credentials (ADC) の設定
+
+Imagen APIはAPI keyではなく、Application Default Credentialsを使用します。
+
+```bash
+# ADCを設定（初回のみ）
+gcloud auth application-default login
+
+# 認証情報を確認
+gcloud auth application-default print-access-token
+```
+
+これにより、`~/.config/gcloud/application_default_credentials.json` に認証情報が保存されます。
+
+#### 3. プロジェクトIDとロケーションの設定
+
+```bash
+# 現在のプロジェクトIDを確認
+gcloud config get-value project
+
+# ロケーション一覧を確認（us-central1を推奨）
+gcloud compute regions list
+```
+
+#### 4. 環境変数の設定
+
+`backend/.env` ファイルに以下を追加:
+
+```env
+# GCP Configuration for Imagen
+GCP_PROJECT_ID=your-project-id
+GCP_LOCATION=us-central1
+```
+
+#### 5. 動作確認
+
+```bash
+# バックエンドディレクトリに移動
+cd backend
+
+# 統合テストを実行（実際のAPI呼び出しが発生するため課金に注意）
+export RUN_INTEGRATION_TESTS=true
+go test ./image/... -v -run Integration
+
+# 通常のテスト（モックのみ、課金なし）
+make backend-test
+```
+
+### IAM権限
+
+プロジェクトのサービスアカウントまたはユーザーアカウントに以下の権限が必要:
+
+- `roles/aiplatform.user` - Vertex AI の使用
+- または `roles/owner` / `roles/editor` （開発環境の場合）
+
+権限を確認:
+
+```bash
+# 現在のアカウントを確認
+gcloud auth list
+
+# プロジェクトのIAMポリシーを確認
+gcloud projects get-iam-policy YOUR_PROJECT_ID
+```
+
+### トラブルシューティング
+
+#### エラー: "Permission denied"
+
+```bash
+# ADCを再設定
+gcloud auth application-default login
+
+# プロジェクトが正しく設定されているか確認
+gcloud config get-value project
+```
+
+#### エラー: "API not enabled"
+
+```bash
+# Vertex AI APIを有効化
+gcloud services enable aiplatform.googleapis.com
+
+# 有効化を確認
+gcloud services list --enabled | grep aiplatform
+```
+
+#### エラー: "Quota exceeded" または "Rate limit exceeded"
+
+- Imagen APIには生成回数の制限があります
+- [GCP Console - Quotas](https://console.cloud.google.com/iam-admin/quotas) で現在の使用状況を確認
+- 必要に応じて上限引き上げをリクエスト
+
+### コスト管理
+
+Imagen APIは画像生成ごとに課金されます。コスト管理のため:
+
+```bash
+# 予算アラートを設定（GCP Consoleで推奨）
+# Billing > Budgets & alerts
+
+# 現在の使用状況を確認
+gcloud billing accounts list
+```
+
+詳細は [FEATURE_IMAGE_GENERATION.md](./FEATURE_IMAGE_GENERATION.md#コスト見積もり) を参照してください。
+
+---
+
+## Twitter API
+
+Twitter投稿機能に使用するTwitter APIのセットアップ方法です。
+
+**注意**: 現在の実装はモックです。実際のTwitter API統合は将来の拡張として予定されています。
+
+### 将来の実装のための準備
+
+#### 1. Twitter Developer Portal でアプリ作成
+
+1. <https://developer.twitter.com/en/portal/dashboard> にアクセス
+2. 「Create App」をクリック
+3. アプリ名、説明を入力
+4. App Permissions: 「Read and Write」を選択
+5. API Key & Secret を取得
+6. Access Token & Secret を生成
+
+#### 2. 環境変数の設定
+
+`backend/.env` に追加（将来の実装用）:
+
+```env
+# Twitter API Configuration (未実装)
+TWITTER_API_KEY=your_twitter_api_key_here
+TWITTER_API_SECRET=your_twitter_api_secret_here
+TWITTER_ACCESS_TOKEN=your_access_token_here
+TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret_here
+```
+
+詳細は [FEATURE_TWITTER_POST.md](./FEATURE_TWITTER_POST.md) を参照してください。
+
+---
+
 ## 参考リンク
+
+### Gemini API
 
 - [Google Cloud SDK ドキュメント](https://cloud.google.com/sdk/docs)
 - [Generative AI API ドキュメント](https://cloud.google.com/vertex-ai/docs/generative-ai/start/quickstarts/api-quickstart)
 - [API キー管理](https://cloud.google.com/docs/authentication/api-keys)
+
+### Imagen API
+
+- [Vertex AI - Imagen Documentation](https://cloud.google.com/vertex-ai/docs/generative-ai/image/overview)
+- [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials)
+- [Vertex AI Pricing](https://cloud.google.com/vertex-ai/pricing)
+
+### Twitter API
+
+- [Twitter API v2 Documentation](https://developer.twitter.com/en/docs/twitter-api)
+- [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard)

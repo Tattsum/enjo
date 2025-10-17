@@ -120,6 +120,12 @@ input TwitterPostInput {
 
 #### 1. Imagen クライアント
 
+**実装方式**: Imagen REST API直接呼び出し（OAuth2認証）
+
+**ファイル**:
+- [backend/image/client.go](../backend/image/client.go) - クライアント本体
+- [backend/image/rest_client.go](../backend/image/rest_client.go) - REST API実装
+
 ```go
 // backend/image/client.go
 
@@ -127,11 +133,9 @@ package image
 
 import (
     "context"
-    "cloud.google.com/go/vertexai/genai"
 )
 
 type Client struct {
-    client    *genai.Client
     projectID string
     location  string
 }
@@ -147,18 +151,36 @@ func (c *Client) GenerateImage(
 ) (*ImageResult, error)
 
 type ImageResult struct {
-    ImageData   []byte    // 画像データ (PNG)
-    ImageURL    string    // GCS URL (保存した場合)
+    ImageData   []byte    // 画像データ (base64エンコード済み)
     Prompt      string    // 使用したプロンプト
-    GeneratedAt time.Time
 }
 
 type ImageOption func(*imageOptions)
 
 func WithStyle(style string) ImageOption
 func WithAspectRatio(ratio string) ImageOption
-func WithSize(width, height int) ImageOption
 ```
+
+**REST API実装詳細** ([backend/image/rest_client.go](../backend/image/rest_client.go)):
+
+- **モデル**: `imagegeneration@002` (Imagen 2)
+- **認証**: Google Application Default Credentials + OAuth2 Bearer Token
+- **エンドポイント**: `https://{location}-aiplatform.googleapis.com/v1/projects/{project}/locations/{location}/publishers/google/models/{model}:predict`
+- **リクエスト形式**:
+  ```json
+  {
+    "instances": [{"prompt": "..."}],
+    "parameters": {
+      "sampleCount": 1,
+      "aspectRatio": "1:1",
+      "negativePrompt": "blurry, low quality, distorted, watermark, text",
+      "sampleImageSize": "1024"
+    }
+  }
+  ```
+- **レスポンス**: Base64エンコードされた画像データ
+
+**注意**: genai SDK非対応のため、直接REST API呼び出しを実装
 
 #### 2. プロンプト生成ロジック
 

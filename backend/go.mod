@@ -5,6 +5,8 @@ go 1.25.2
 require (
 	cloud.google.com/go/vertexai v0.15.0
 	github.com/99designs/gqlgen v0.17.81
+	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b
+	github.com/dghubble/oauth1 v0.7.3
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/cors v1.2.2
 	github.com/joho/godotenv v1.5.1
@@ -21,10 +23,13 @@ require (
 	cloud.google.com/go/iam v1.5.2 // indirect
 	cloud.google.com/go/longrunning v0.6.7 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
+	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
+	github.com/dghubble/sling v1.4.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
