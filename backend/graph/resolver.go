@@ -1,6 +1,10 @@
 package graph
 
-import "context"
+import (
+	"context"
+
+	"github.com/Tattsum/enjo/backend/twitter"
+)
 
 // This file will not be regenerated automatically.
 //
@@ -13,14 +17,21 @@ type GeminiClient interface {
 	GenerateReply(ctx context.Context, text, replyType string) (string, error)
 }
 
+// TwitterClient is the interface for Twitter API client
+type TwitterClient interface {
+	PostTweet(ctx context.Context, text string, options ...twitter.TweetOption) (*twitter.TweetResult, error)
+}
+
 // Resolver is the root resolver for GraphQL
 type Resolver struct {
-	geminiClient GeminiClient
+	geminiClient  GeminiClient
+	twitterClient TwitterClient
 }
 
 // NewResolver creates a new Resolver with dependencies
-func NewResolver(geminiClient GeminiClient) *Resolver {
+func NewResolver(geminiClient GeminiClient, twitterClient TwitterClient) *Resolver {
 	return &Resolver{
-		geminiClient: geminiClient,
+		geminiClient:  geminiClient,
+		twitterClient: twitterClient,
 	}
 }

@@ -3,6 +3,7 @@
 package model
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -28,6 +29,19 @@ type Reply struct {
 	ID      string    `json:"id"`
 	Type    ReplyType `json:"type"`
 	Content string    `json:"content"`
+}
+
+type TwitterPostInput struct {
+	Text          string `json:"text"`
+	AddHashtag    *bool  `json:"addHashtag,omitempty"`
+	AddDisclaimer *bool  `json:"addDisclaimer,omitempty"`
+}
+
+type TwitterPostResult struct {
+	Success      bool    `json:"success"`
+	TweetID      *string `json:"tweetId,omitempty"`
+	TweetURL     *string `json:"tweetUrl,omitempty"`
+	ErrorMessage *string `json:"errorMessage,omitempty"`
 }
 
 type ReplyType string
@@ -73,4 +87,18 @@ func (e *ReplyType) UnmarshalGQL(v any) error {
 
 func (e ReplyType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ReplyType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ReplyType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

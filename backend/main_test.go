@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/Tattsum/enjo/backend/graph"
+	"github.com/Tattsum/enjo/backend/twitter"
 )
 
 // MockGeminiClient for testing
@@ -26,9 +27,19 @@ func (*MockGeminiClient) GenerateReply(_ context.Context, _, _ string) (string, 
 	return "Mock reply", nil
 }
 
+// MockTwitterClient for testing
+type MockTwitterClient struct{}
+
+func (*MockTwitterClient) PostTweet(_ context.Context, _ string, _ ...twitter.TweetOption) (*twitter.TweetResult, error) {
+	return &twitter.TweetResult{
+		ID:  "mock-tweet-id",
+		URL: "https://twitter.com/user/status/mock-tweet-id",
+	}, nil
+}
+
 func TestHealthEndpoint(t *testing.T) {
 	// Arrange
-	handler := setupRouter(&MockGeminiClient{})
+	handler := setupRouter(&MockGeminiClient{}, &MockTwitterClient{})
 	req := httptest.NewRequest(http.MethodGet, "/health", http.NoBody)
 	w := httptest.NewRecorder()
 
@@ -49,7 +60,7 @@ func TestHealthEndpoint(t *testing.T) {
 
 func TestGraphQLEndpoint(t *testing.T) {
 	// Arrange
-	handler := setupRouter(&MockGeminiClient{})
+	handler := setupRouter(&MockGeminiClient{}, &MockTwitterClient{})
 
 	// GraphQL health query
 	query := `{"query": "query { health }"}`
@@ -87,7 +98,7 @@ func TestGraphQLEndpoint(t *testing.T) {
 
 func TestCORSHeaders(t *testing.T) {
 	// Arrange
-	handler := setupRouter(&MockGeminiClient{})
+	handler := setupRouter(&MockGeminiClient{}, &MockTwitterClient{})
 	req := httptest.NewRequest(http.MethodOptions, "/graphql", http.NoBody)
 	req.Header.Set("Origin", "http://localhost:3000")
 	req.Header.Set("Access-Control-Request-Method", "POST")
@@ -110,10 +121,11 @@ func TestCORSHeaders(t *testing.T) {
 
 func TestSetupRouter(t *testing.T) {
 	// Arrange
-	client := &MockGeminiClient{}
+	geminiClient := &MockGeminiClient{}
+	twitterClient := &MockTwitterClient{}
 
 	// Act
-	handler := setupRouter(client)
+	handler := setupRouter(geminiClient, twitterClient)
 
 	// Assert
 	if handler == nil {
@@ -123,10 +135,11 @@ func TestSetupRouter(t *testing.T) {
 
 func TestNewResolver(t *testing.T) {
 	// Arrange
-	client := &MockGeminiClient{}
+	geminiClient := &MockGeminiClient{}
+	twitterClient := &MockTwitterClient{}
 
 	// Act
-	resolver := graph.NewResolver(client)
+	resolver := graph.NewResolver(geminiClient, twitterClient)
 
 	// Assert
 	if resolver == nil {

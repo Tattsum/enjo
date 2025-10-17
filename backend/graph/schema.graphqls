@@ -7,6 +7,7 @@ type Query {
 type Mutation {
   generateInflammatoryText(input: GenerateInput!): GenerateResult!
   generateReplies(text: String!): [Reply!]!
+  postToTwitter(input: TwitterPostInput!): TwitterPostResult!
 }
 
 input GenerateInput {
@@ -30,4 +31,17 @@ enum ReplyType {
   NITPICKING
   OFF_TARGET
   EXCESSIVE_DEFENSE
+}
+
+input TwitterPostInput {
+  text: String!
+  addHashtag: Boolean
+  addDisclaimer: Boolean
+}
+
+type TwitterPostResult {
+  success: Boolean!
+  tweetId: String
+  tweetUrl: String
+  errorMessage: String
 }

@@ -17,10 +17,11 @@ import (
 	"github.com/Tattsum/enjo/backend/gemini"
 	"github.com/Tattsum/enjo/backend/graph"
 	"github.com/Tattsum/enjo/backend/graph/generated"
+	"github.com/Tattsum/enjo/backend/twitter"
 )
 
 // setupRouter creates and configures the HTTP router
-func setupRouter(geminiClient graph.GeminiClient) http.Handler {
+func setupRouter(geminiClient graph.GeminiClient, twitterClient graph.TwitterClient) http.Handler {
 	router := chi.NewRouter()
 
 	// CORS configuration
@@ -43,7 +44,7 @@ func setupRouter(geminiClient graph.GeminiClient) http.Handler {
 	})
 
 	// GraphQL resolver
-	resolver := graph.NewResolver(geminiClient)
+	resolver := graph.NewResolver(geminiClient, twitterClient)
 
 	// GraphQL server
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{
@@ -87,8 +88,28 @@ func main() {
 		log.Fatalf("Failed to create Vertex AI client: %v", err)
 	}
 
+	// Initialize Twitter client
+	twitterAPIKey := os.Getenv("TWITTER_API_KEY")
+	twitterAPISecret := os.Getenv("TWITTER_API_SECRET")
+	twitterAccessToken := os.Getenv("TWITTER_ACCESS_TOKEN")
+	twitterAccessTokenSecret := os.Getenv("TWITTER_ACCESS_TOKEN_SECRET")
+
+	// Twitter client is optional - if not configured, operations will fail gracefully
+	var twitterClient graph.TwitterClient
+	if twitterAPIKey != "" && twitterAPISecret != "" && twitterAccessToken != "" && twitterAccessTokenSecret != "" {
+		twitterClient, err = twitter.NewClient(twitterAPIKey, twitterAPISecret, twitterAccessToken, twitterAccessTokenSecret)
+		if err != nil {
+			log.Printf("Warning: Failed to create Twitter client: %v", err)
+			log.Println("Twitter posting functionality will be disabled")
+		} else {
+			log.Println("Twitter client initialized successfully")
+		}
+	} else {
+		log.Println("Twitter API credentials not configured - Twitter posting functionality will be disabled")
+	}
+
 	// Setup router
-	router := setupRouter(geminiClient)
+	router := setupRouter(geminiClient, twitterClient)
 
 	// Start server
 	log.Printf("Server is running on http://localhost:%s", port)

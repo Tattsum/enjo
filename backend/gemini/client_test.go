@@ -9,13 +9,18 @@ import (
 )
 
 func TestClient_GenerateInflammatoryText(t *testing.T) {
-	// Skip if API key is not set
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	if apiKey == "" {
-		t.Skip("GEMINI_API_KEY is not set")
+	// Skip if GCP project ID is not set
+	projectID := os.Getenv("GCP_PROJECT_ID")
+	if projectID == "" {
+		t.Skip("GCP_PROJECT_ID is not set")
 	}
 
-	client, err := gemini.NewClient(context.Background(), apiKey)
+	location := os.Getenv("GCP_LOCATION")
+	if location == "" {
+		location = "us-central1" // Default location
+	}
+
+	client, err := gemini.NewClient(context.Background(), projectID, location)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -100,12 +105,17 @@ func TestClient_GenerateInflammatoryText(t *testing.T) {
 }
 
 func TestClient_GenerateExplanation(t *testing.T) {
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	if apiKey == "" {
-		t.Skip("GEMINI_API_KEY is not set")
+	projectID := os.Getenv("GCP_PROJECT_ID")
+	if projectID == "" {
+		t.Skip("GCP_PROJECT_ID is not set")
 	}
 
-	client, err := gemini.NewClient(context.Background(), apiKey)
+	location := os.Getenv("GCP_LOCATION")
+	if location == "" {
+		location = "us-central1"
+	}
+
+	client, err := gemini.NewClient(context.Background(), projectID, location)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -166,12 +176,17 @@ func TestClient_GenerateExplanation(t *testing.T) {
 }
 
 func TestClient_GenerateReply(t *testing.T) {
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	if apiKey == "" {
-		t.Skip("GEMINI_API_KEY is not set")
+	projectID := os.Getenv("GCP_PROJECT_ID")
+	if projectID == "" {
+		t.Skip("GCP_PROJECT_ID is not set")
 	}
 
-	client, err := gemini.NewClient(context.Background(), apiKey)
+	location := os.Getenv("GCP_LOCATION")
+	if location == "" {
+		location = "us-central1"
+	}
+
+	client, err := gemini.NewClient(context.Background(), projectID, location)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -249,10 +264,10 @@ func TestClient_GenerateReply(t *testing.T) {
 	}
 }
 
-func TestNewClient_InvalidAPIKey(t *testing.T) {
+func TestNewClient_InvalidProjectID(t *testing.T) {
 	ctx := context.Background()
-	_, err := gemini.NewClient(ctx, "")
+	_, err := gemini.NewClient(ctx, "", "us-central1")
 	if err == nil {
-		t.Error("expected error with empty API key, but got nil")
+		t.Error("expected error with empty project ID, but got nil")
 	}
 }
