@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -24,6 +25,16 @@ import (
 // setupRouter creates and configures the HTTP router
 func setupRouter(geminiClient graph.GeminiClient, twitterClient graph.TwitterClient, imageClient graph.ImageClient) http.Handler {
 	router := chi.NewRouter()
+
+	// Request logging middleware
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			log.Printf("→ %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
+			next.ServeHTTP(w, r)
+			log.Printf("← %s %s completed in %v", r.Method, r.URL.Path, time.Since(start))
+		})
+	})
 
 	// CORS configuration
 	router.Use(cors.Handler(cors.Options{
@@ -47,10 +58,16 @@ func setupRouter(geminiClient graph.GeminiClient, twitterClient graph.TwitterCli
 	// GraphQL resolver
 	resolver := graph.NewResolver(geminiClient, twitterClient, imageClient)
 
-	// GraphQL server
+	// GraphQL server with timeout
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{
 		Resolvers: resolver,
 	}))
+
+	// Add error handling
+	srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
+		log.Printf("PANIC recovered in GraphQL handler: %v", err)
+		return fmt.Errorf("internal server error")
+	})
 
 	// GraphQL endpoints
 	router.Handle("/graphql", srv)

@@ -7,6 +7,9 @@ import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client'
 export function createApolloClient(): ApolloClient<unknown> {
   const httpLink = new HttpLink({
     uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:8080/graphql',
+    fetchOptions: {
+      timeout: 60000, // 60秒タイムアウト（Gemini APIのレスポンス待ち用）
+    },
   })
 
   return new ApolloClient({
