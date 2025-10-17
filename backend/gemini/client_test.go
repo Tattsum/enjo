@@ -8,6 +8,7 @@ import (
 	"github.com/Tattsum/enjo/backend/gemini"
 )
 
+//nolint:revive // Test function complexity is acceptable
 func TestClient_GenerateInflammatoryText(t *testing.T) {
 	// Skip if GCP project ID is not set
 	projectID := os.Getenv("GCP_PROJECT_ID")

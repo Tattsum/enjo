@@ -67,3 +67,38 @@ export interface GenerateRepliesData {
 export interface GenerateRepliesVariables {
   text: string
 }
+
+/**
+ * Mutation to post a tweet to Twitter
+ */
+export const POST_TO_TWITTER = gql`
+  mutation PostToTwitter($input: TwitterPostInput!) {
+    postToTwitter(input: $input) {
+      success
+      tweetId
+      tweetUrl
+      errorMessage
+    }
+  }
+`
+
+export interface TwitterPostInput {
+  text: string
+  addHashtag?: boolean
+  addDisclaimer?: boolean
+}
+
+export interface TwitterPostResult {
+  success: boolean
+  tweetId?: string
+  tweetUrl?: string
+  errorMessage?: string
+}
+
+export interface PostToTwitterData {
+  postToTwitter: TwitterPostResult
+}
+
+export interface PostToTwitterVariables {
+  input: TwitterPostInput
+}

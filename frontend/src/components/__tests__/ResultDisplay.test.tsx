@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { MockedProvider } from '@apollo/client/testing';
 import userEvent from '@testing-library/user-event';
 import ResultDisplay from '../ResultDisplay';
 
@@ -23,7 +24,11 @@ describe('ResultDisplay', () => {
   });
 
   it('renders original and inflammatory text side by side', () => {
-    render(<ResultDisplay result={mockResult} />);
+    render(
+      <MockedProvider>
+        <ResultDisplay result={mockResult} />
+      </MockedProvider>
+    );
 
     expect(screen.getByText('元の投稿')).toBeInTheDocument();
     expect(screen.getByText('炎上化後')).toBeInTheDocument();
@@ -32,7 +37,11 @@ describe('ResultDisplay', () => {
   });
 
   it('displays explanation when provided', () => {
-    render(<ResultDisplay result={mockResult} />);
+    render(
+      <MockedProvider>
+        <ResultDisplay result={mockResult} />
+      </MockedProvider>
+    );
 
     expect(screen.getByText(/説明/)).toBeInTheDocument();
     expect(screen.getByText(mockResult.explanation)).toBeInTheDocument();
@@ -43,13 +52,21 @@ describe('ResultDisplay', () => {
       original: 'テスト',
       inflammatory: '炎上テスト',
     };
-    render(<ResultDisplay result={resultWithoutExplanation} />);
+    render(
+      <MockedProvider>
+        <ResultDisplay result={resultWithoutExplanation} />
+      </MockedProvider>
+    );
 
     expect(screen.queryByText(/説明/)).not.toBeInTheDocument();
   });
 
   it('renders copy button for inflammatory text', () => {
-    render(<ResultDisplay result={mockResult} />);
+    render(
+      <MockedProvider>
+        <ResultDisplay result={mockResult} />
+      </MockedProvider>
+    );
 
     const copyButton = screen.getByRole('button', { name: /コピー/ });
     expect(copyButton).toBeInTheDocument();
@@ -57,7 +74,11 @@ describe('ResultDisplay', () => {
 
   it('shows success message after copying', async () => {
     const user = userEvent.setup();
-    render(<ResultDisplay result={mockResult} />);
+    render(
+      <MockedProvider>
+        <ResultDisplay result={mockResult} />
+      </MockedProvider>
+    );
 
     const copyButton = screen.getByRole('button', { name: /コピー/ });
     await user.click(copyButton);
@@ -66,7 +87,11 @@ describe('ResultDisplay', () => {
   });
 
   it('renders in SNS-style mockup design', () => {
-    render(<ResultDisplay result={mockResult} />);
+    render(
+      <MockedProvider>
+        <ResultDisplay result={mockResult} />
+      </MockedProvider>
+    );
 
     // Check for visual elements that suggest SNS design
     const originalSection = screen.getByText('元の投稿').closest('div');

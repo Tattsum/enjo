@@ -58,6 +58,29 @@ func setupRouter(geminiClient graph.GeminiClient, twitterClient graph.TwitterCli
 	return router
 }
 
+// initializeTwitterClient creates a Twitter client if credentials are configured
+func initializeTwitterClient() graph.TwitterClient {
+	apiKey := os.Getenv("TWITTER_API_KEY")
+	apiSecret := os.Getenv("TWITTER_API_SECRET")
+	accessToken := os.Getenv("TWITTER_ACCESS_TOKEN")
+	accessTokenSecret := os.Getenv("TWITTER_ACCESS_TOKEN_SECRET")
+
+	if apiKey == "" || apiSecret == "" || accessToken == "" || accessTokenSecret == "" {
+		log.Println("Twitter API credentials not configured - Twitter posting functionality will be disabled")
+		return nil
+	}
+
+	client, err := twitter.NewClient(apiKey, apiSecret, accessToken, accessTokenSecret)
+	if err != nil {
+		log.Printf("Warning: Failed to create Twitter client: %v", err)
+		log.Println("Twitter posting functionality will be disabled")
+		return nil
+	}
+
+	log.Println("Twitter client initialized successfully")
+	return client
+}
+
 func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
@@ -88,25 +111,8 @@ func main() {
 		log.Fatalf("Failed to create Vertex AI client: %v", err)
 	}
 
-	// Initialize Twitter client
-	twitterAPIKey := os.Getenv("TWITTER_API_KEY")
-	twitterAPISecret := os.Getenv("TWITTER_API_SECRET")
-	twitterAccessToken := os.Getenv("TWITTER_ACCESS_TOKEN")
-	twitterAccessTokenSecret := os.Getenv("TWITTER_ACCESS_TOKEN_SECRET")
-
-	// Twitter client is optional - if not configured, operations will fail gracefully
-	var twitterClient graph.TwitterClient
-	if twitterAPIKey != "" && twitterAPISecret != "" && twitterAccessToken != "" && twitterAccessTokenSecret != "" {
-		twitterClient, err = twitter.NewClient(twitterAPIKey, twitterAPISecret, twitterAccessToken, twitterAccessTokenSecret)
-		if err != nil {
-			log.Printf("Warning: Failed to create Twitter client: %v", err)
-			log.Println("Twitter posting functionality will be disabled")
-		} else {
-			log.Println("Twitter client initialized successfully")
-		}
-	} else {
-		log.Println("Twitter API credentials not configured - Twitter posting functionality will be disabled")
-	}
+	// Initialize Twitter client (optional)
+	twitterClient := initializeTwitterClient()
 
 	// Setup router
 	router := setupRouter(geminiClient, twitterClient)

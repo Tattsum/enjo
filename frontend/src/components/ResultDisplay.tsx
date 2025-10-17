@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import TwitterPostButton from './TwitterPostButton';
 
 interface ResultDisplayProps {
   result: {
@@ -52,23 +53,27 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
           </div>
           <p className="text-gray-800 whitespace-pre-wrap mb-4">{result.inflammatory}</p>
 
-          <button
-            onClick={handleCopy}
-            className="mt-4 px-4 py-2 bg-fire-600 text-white rounded-lg hover:bg-fire-700 transition-colors flex items-center gap-2"
-            aria-label="コピー"
-          >
-            {copied ? (
-              <>
-                <span>✓</span>
-                <span>コピーしました！</span>
-              </>
-            ) : (
-              <>
-                <span>📋</span>
-                <span>コピー</span>
-              </>
-            )}
-          </button>
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={handleCopy}
+              className="px-4 py-2 bg-fire-600 text-white rounded-lg hover:bg-fire-700 transition-colors flex items-center gap-2"
+              aria-label="コピー"
+            >
+              {copied ? (
+                <>
+                  <span>✓</span>
+                  <span>コピーしました！</span>
+                </>
+              ) : (
+                <>
+                  <span>📋</span>
+                  <span>コピー</span>
+                </>
+              )}
+            </button>
+
+            <TwitterPostButton text={result.inflammatory} />
+          </div>
         </div>
       </div>
 
