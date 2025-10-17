@@ -27,6 +27,10 @@ func (*MockGeminiClient) GenerateReply(_ context.Context, _, _ string) (string, 
 	return "Mock reply", nil
 }
 
+func (*MockGeminiClient) GenerateContent(_ context.Context, _ string) (string, error) {
+	return "Mock content", nil
+}
+
 // MockTwitterClient for testing
 type MockTwitterClient struct{}
 
@@ -37,9 +41,16 @@ func (*MockTwitterClient) PostTweet(_ context.Context, _ string, _ ...twitter.Tw
 	}, nil
 }
 
+// MockImageClient for testing
+type MockImageClient struct{}
+
+func (*MockImageClient) GenerateImage(_ context.Context, _ string) ([]byte, error) {
+	return []byte("mock-image-data"), nil
+}
+
 func TestHealthEndpoint(t *testing.T) {
 	// Arrange
-	handler := setupRouter(&MockGeminiClient{}, &MockTwitterClient{})
+	handler := setupRouter(&MockGeminiClient{}, &MockTwitterClient{}, &MockImageClient{})
 	req := httptest.NewRequest(http.MethodGet, "/health", http.NoBody)
 	w := httptest.NewRecorder()
 
@@ -60,7 +71,7 @@ func TestHealthEndpoint(t *testing.T) {
 
 func TestGraphQLEndpoint(t *testing.T) {
 	// Arrange
-	handler := setupRouter(&MockGeminiClient{}, &MockTwitterClient{})
+	handler := setupRouter(&MockGeminiClient{}, &MockTwitterClient{}, &MockImageClient{})
 
 	// GraphQL health query
 	query := `{"query": "query { health }"}`
@@ -98,7 +109,7 @@ func TestGraphQLEndpoint(t *testing.T) {
 
 func TestCORSHeaders(t *testing.T) {
 	// Arrange
-	handler := setupRouter(&MockGeminiClient{}, &MockTwitterClient{})
+	handler := setupRouter(&MockGeminiClient{}, &MockTwitterClient{}, &MockImageClient{})
 	req := httptest.NewRequest(http.MethodOptions, "/graphql", http.NoBody)
 	req.Header.Set("Origin", "http://localhost:3000")
 	req.Header.Set("Access-Control-Request-Method", "POST")
@@ -123,9 +134,10 @@ func TestSetupRouter(t *testing.T) {
 	// Arrange
 	geminiClient := &MockGeminiClient{}
 	twitterClient := &MockTwitterClient{}
+	imageClient := &MockImageClient{}
 
 	// Act
-	handler := setupRouter(geminiClient, twitterClient)
+	handler := setupRouter(geminiClient, twitterClient, imageClient)
 
 	// Assert
 	if handler == nil {
@@ -137,9 +149,10 @@ func TestNewResolver(t *testing.T) {
 	// Arrange
 	geminiClient := &MockGeminiClient{}
 	twitterClient := &MockTwitterClient{}
+	imageClient := &MockImageClient{}
 
 	// Act
-	resolver := graph.NewResolver(geminiClient, twitterClient)
+	resolver := graph.NewResolver(geminiClient, twitterClient, imageClient)
 
 	// Assert
 	if resolver == nil {

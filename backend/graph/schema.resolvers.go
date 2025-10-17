@@ -125,6 +125,39 @@ func (r *mutationResolver) PostToTwitter(ctx context.Context, input model.Twitte
 	}, nil
 }
 
+// GenerateImage is the resolver for the generateImage field.
+func (r *mutationResolver) GenerateImage(ctx context.Context, input model.GenerateImageInput) (*model.GenerateImageResult, error) {
+	// Validate input
+	if input.Text == "" {
+		return nil, fmt.Errorf("text is required")
+	}
+
+	// Generate image prompt using Gemini
+	imagePrompt, err := generateImagePromptFromText(ctx, r.geminiClient, input.Text)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate image prompt: %w", err)
+	}
+
+	// Generate image using Imagen
+	imageData, err := r.imageClient.GenerateImage(ctx, imagePrompt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate image: %w", err)
+	}
+
+	// For now, we'll encode the image data as base64 and return it as a data URL
+	// In production, you would upload to GCS and return a proper URL
+	imageURL := createImageDataURL(imageData)
+
+	// Get current timestamp
+	generatedAt := getCurrentTimestamp()
+
+	return &model.GenerateImageResult{
+		ImageURL:    imageURL,
+		Prompt:      imagePrompt,
+		GeneratedAt: generatedAt,
+	}, nil
+}
+
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (string, error) {
 	return "OK", nil

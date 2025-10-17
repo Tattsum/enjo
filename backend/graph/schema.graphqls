@@ -8,6 +8,7 @@ type Mutation {
   generateInflammatoryText(input: GenerateInput!): GenerateResult!
   generateReplies(text: String!): [Reply!]!
   postToTwitter(input: TwitterPostInput!): TwitterPostResult!
+  generateImage(input: GenerateImageInput!): GenerateImageResult!
 }
 
 input GenerateInput {
@@ -44,4 +45,29 @@ type TwitterPostResult {
   tweetId: String
   tweetUrl: String
   errorMessage: String
+}
+
+input GenerateImageInput {
+  text: String!
+  style: ImageStyle
+  aspectRatio: AspectRatio
+}
+
+enum ImageStyle {
+  REALISTIC
+  ILLUSTRATION
+  MEME
+  DRAMATIC
+}
+
+enum AspectRatio {
+  SQUARE
+  LANDSCAPE
+  PORTRAIT
+}
+
+type GenerateImageResult {
+  imageUrl: String!
+  prompt: String!
+  generatedAt: String!
 }

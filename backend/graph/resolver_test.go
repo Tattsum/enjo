@@ -14,6 +14,7 @@ type MockGeminiClient struct {
 	GenerateInflammatoryTextFunc func(ctx context.Context, original string, level int) (string, error)
 	GenerateExplanationFunc      func(ctx context.Context, original, inflammatory string) (string, error)
 	GenerateReplyFunc            func(ctx context.Context, text, replyType string) (string, error)
+	GenerateContentFunc          func(ctx context.Context, prompt string) (string, error)
 }
 
 func (m *MockGeminiClient) GenerateInflammatoryText(ctx context.Context, original string, level int) (string, error) {
@@ -35,6 +36,25 @@ func (m *MockGeminiClient) GenerateReply(ctx context.Context, text, replyType st
 		return m.GenerateReplyFunc(ctx, text, replyType)
 	}
 	return "", errors.New("not implemented")
+}
+
+func (m *MockGeminiClient) GenerateContent(ctx context.Context, prompt string) (string, error) {
+	if m.GenerateContentFunc != nil {
+		return m.GenerateContentFunc(ctx, prompt)
+	}
+	return "", errors.New("not implemented")
+}
+
+// MockImageClient is a mock implementation of the Image client for testing
+type MockImageClient struct {
+	GenerateImageFunc func(ctx context.Context, prompt string) ([]byte, error)
+}
+
+func (m *MockImageClient) GenerateImage(ctx context.Context, prompt string) ([]byte, error) {
+	if m.GenerateImageFunc != nil {
+		return m.GenerateImageFunc(ctx, prompt)
+	}
+	return nil, errors.New("not implemented")
 }
 
 func TestQueryResolver_Health(t *testing.T) {
@@ -277,5 +297,123 @@ func validateReplyTypes(t *testing.T, replies []*model.Reply) {
 		if !replyTypes[expectedType] {
 			t.Errorf("GenerateReplies() missing reply type %v", expectedType)
 		}
+	}
+}
+
+func TestMutationResolver_GenerateImage(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         model.GenerateImageInput
+		mockPrompt    string
+		mockImageData []byte
+		mockPromptErr error
+		mockImageErr  error
+		wantPrompt    string
+		wantErr       bool
+		wantErrMsg    string
+	}{
+		{
+			name: "successfully generates image",
+			input: model.GenerateImageInput{
+				Text: "炎上しそうな投稿",
+			},
+			mockPrompt:    "A dramatic scene with flames and social media chaos",
+			mockImageData: []byte("fake-image-data"),
+			wantPrompt:    "A dramatic scene with flames and social media chaos",
+			wantErr:       false,
+		},
+		{
+			name: "returns error when text is empty",
+			input: model.GenerateImageInput{
+				Text: "",
+			},
+			wantErr:    true,
+			wantErrMsg: "text is required",
+		},
+		{
+			name: "returns error when prompt generation fails",
+			input: model.GenerateImageInput{
+				Text: "テスト投稿",
+			},
+			mockPromptErr: errors.New("prompt generation error"),
+			wantErr:       true,
+			wantErrMsg:    "failed to generate image prompt",
+		},
+		{
+			name: "returns error when image generation fails",
+			input: model.GenerateImageInput{
+				Text: "テスト投稿",
+			},
+			mockPrompt:   "Test prompt",
+			mockImageErr: errors.New("image generation error"),
+			wantErr:      true,
+			wantErrMsg:   "failed to generate image",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resolver := createImageGenerationResolver(tt.mockPrompt, tt.mockImageData, tt.mockPromptErr, tt.mockImageErr)
+			got, err := resolver.GenerateImage(context.Background(), tt.input)
+			assertImageGenerationResult(t, got, err, tt.wantErr, tt.wantErrMsg, tt.wantPrompt)
+		})
+	}
+}
+
+func createImageGenerationResolver(mockPrompt string, mockImageData []byte, mockPromptErr, mockImageErr error) *mutationResolver {
+	mockGeminiClient := &MockGeminiClient{
+		GenerateContentFunc: func(_ context.Context, _ string) (string, error) {
+			if mockPromptErr != nil {
+				return "", mockPromptErr
+			}
+			return mockPrompt, nil
+		},
+	}
+
+	mockImageClient := &MockImageClient{
+		GenerateImageFunc: func(_ context.Context, _ string) ([]byte, error) {
+			if mockImageErr != nil {
+				return nil, mockImageErr
+			}
+			return mockImageData, nil
+		},
+	}
+
+	r := &Resolver{
+		geminiClient: mockGeminiClient,
+		imageClient:  mockImageClient,
+	}
+	return &mutationResolver{r}
+}
+
+func assertImageGenerationResult(t *testing.T, got *model.GenerateImageResult, err error, wantErr bool, wantErrMsg, wantPrompt string) {
+	t.Helper()
+
+	if (err != nil) != wantErr {
+		t.Errorf("GenerateImage() error = %v, wantErr %v", err, wantErr)
+		return
+	}
+
+	if wantErr {
+		if err != nil && wantErrMsg != "" && !strings.Contains(err.Error(), wantErrMsg) {
+			t.Errorf("GenerateImage() error = %v, want error containing %v", err, wantErrMsg)
+		}
+		return
+	}
+
+	if got == nil {
+		t.Fatal("GenerateImage() returned nil result")
+	}
+
+	if got.Prompt != wantPrompt {
+		t.Errorf("GenerateImage().Prompt = %v, want %v", got.Prompt, wantPrompt)
+	}
+
+	if got.ImageURL == "" {
+		t.Error("GenerateImage().ImageURL is empty")
+	}
+
+	if got.GeneratedAt == "" {
+		t.Error("GenerateImage().GeneratedAt is empty")
 	}
 }

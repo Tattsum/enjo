@@ -9,6 +9,18 @@ import (
 	"strconv"
 )
 
+type GenerateImageInput struct {
+	Text        string       `json:"text"`
+	Style       *ImageStyle  `json:"style,omitempty"`
+	AspectRatio *AspectRatio `json:"aspectRatio,omitempty"`
+}
+
+type GenerateImageResult struct {
+	ImageURL    string `json:"imageUrl"`
+	Prompt      string `json:"prompt"`
+	GeneratedAt string `json:"generatedAt"`
+}
+
 type GenerateInput struct {
 	OriginalText string `json:"originalText"`
 	Level        int    `json:"level"`
@@ -42,6 +54,122 @@ type TwitterPostResult struct {
 	TweetID      *string `json:"tweetId,omitempty"`
 	TweetURL     *string `json:"tweetUrl,omitempty"`
 	ErrorMessage *string `json:"errorMessage,omitempty"`
+}
+
+type AspectRatio string
+
+const (
+	AspectRatioSquare    AspectRatio = "SQUARE"
+	AspectRatioLandscape AspectRatio = "LANDSCAPE"
+	AspectRatioPortrait  AspectRatio = "PORTRAIT"
+)
+
+var AllAspectRatio = []AspectRatio{
+	AspectRatioSquare,
+	AspectRatioLandscape,
+	AspectRatioPortrait,
+}
+
+func (e AspectRatio) IsValid() bool {
+	switch e {
+	case AspectRatioSquare, AspectRatioLandscape, AspectRatioPortrait:
+		return true
+	}
+	return false
+}
+
+func (e AspectRatio) String() string {
+	return string(e)
+}
+
+func (e *AspectRatio) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AspectRatio(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AspectRatio", str)
+	}
+	return nil
+}
+
+func (e AspectRatio) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AspectRatio) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AspectRatio) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ImageStyle string
+
+const (
+	ImageStyleRealistic    ImageStyle = "REALISTIC"
+	ImageStyleIllustration ImageStyle = "ILLUSTRATION"
+	ImageStyleMeme         ImageStyle = "MEME"
+	ImageStyleDramatic     ImageStyle = "DRAMATIC"
+)
+
+var AllImageStyle = []ImageStyle{
+	ImageStyleRealistic,
+	ImageStyleIllustration,
+	ImageStyleMeme,
+	ImageStyleDramatic,
+}
+
+func (e ImageStyle) IsValid() bool {
+	switch e {
+	case ImageStyleRealistic, ImageStyleIllustration, ImageStyleMeme, ImageStyleDramatic:
+		return true
+	}
+	return false
+}
+
+func (e ImageStyle) String() string {
+	return string(e)
+}
+
+func (e *ImageStyle) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ImageStyle(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ImageStyle", str)
+	}
+	return nil
+}
+
+func (e ImageStyle) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ImageStyle) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ImageStyle) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type ReplyType string

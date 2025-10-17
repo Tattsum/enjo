@@ -17,11 +17,12 @@ import (
 	"github.com/Tattsum/enjo/backend/gemini"
 	"github.com/Tattsum/enjo/backend/graph"
 	"github.com/Tattsum/enjo/backend/graph/generated"
+	"github.com/Tattsum/enjo/backend/image"
 	"github.com/Tattsum/enjo/backend/twitter"
 )
 
 // setupRouter creates and configures the HTTP router
-func setupRouter(geminiClient graph.GeminiClient, twitterClient graph.TwitterClient) http.Handler {
+func setupRouter(geminiClient graph.GeminiClient, twitterClient graph.TwitterClient, imageClient graph.ImageClient) http.Handler {
 	router := chi.NewRouter()
 
 	// CORS configuration
@@ -44,7 +45,7 @@ func setupRouter(geminiClient graph.GeminiClient, twitterClient graph.TwitterCli
 	})
 
 	// GraphQL resolver
-	resolver := graph.NewResolver(geminiClient, twitterClient)
+	resolver := graph.NewResolver(geminiClient, twitterClient, imageClient)
 
 	// GraphQL server
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{
@@ -111,11 +112,18 @@ func main() {
 		log.Fatalf("Failed to create Vertex AI client: %v", err)
 	}
 
+	// Initialize Image client
+	imgClient, err := image.NewClient(ctx, projectID, location)
+	if err != nil {
+		log.Fatalf("Failed to create Image client: %v", err)
+	}
+	imageClient := image.NewAdapter(imgClient)
+
 	// Initialize Twitter client (optional)
 	twitterClient := initializeTwitterClient()
 
 	// Setup router
-	router := setupRouter(geminiClient, twitterClient)
+	router := setupRouter(geminiClient, twitterClient, imageClient)
 
 	// Start server
 	log.Printf("Server is running on http://localhost:%s", port)
@@ -129,5 +137,9 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	log.Fatal(server.ListenAndServe())
+	// Run server
+	if err := server.ListenAndServe(); err != nil {
+		imgClient.Close()
+		log.Fatalf("Server failed: %v", err)
+	}
 }

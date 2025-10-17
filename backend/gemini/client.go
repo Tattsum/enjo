@@ -75,7 +75,7 @@ func (c *Client) GenerateInflammatoryText(ctx context.Context, original string, 
 	prompt := buildInflammatoryPrompt(original, level)
 
 	// Generate content
-	return c.generateContent(ctx, prompt, "no content generated")
+	return c.generate(ctx, prompt, "no content generated")
 }
 
 // GenerateExplanation generates an explanation of why the text is inflammatory
@@ -92,7 +92,7 @@ func (c *Client) GenerateExplanation(ctx context.Context, original, inflammatory
 	prompt := buildExplanationPrompt(original, inflammatory)
 
 	// Generate content
-	return c.generateContent(ctx, prompt, "no explanation generated")
+	return c.generate(ctx, prompt, "no explanation generated")
 }
 
 // GenerateReply generates a reply based on the reply type
@@ -109,11 +109,16 @@ func (c *Client) GenerateReply(ctx context.Context, text, replyType string) (str
 	prompt := buildReplyPrompt(text, replyType)
 
 	// Generate content
-	return c.generateContent(ctx, prompt, "no reply generated")
+	return c.generate(ctx, prompt, "no reply generated")
 }
 
-// generateContent is a helper function to generate content from Vertex AI
-func (c *Client) generateContent(ctx context.Context, prompt, emptyResultMsg string) (string, error) {
+// GenerateContent generates content from a given prompt (public method for general use)
+func (c *Client) GenerateContent(ctx context.Context, prompt string) (string, error) {
+	return c.generate(ctx, prompt, "no content generated")
+}
+
+// generate is a helper function to generate content from Vertex AI
+func (c *Client) generate(ctx context.Context, prompt, emptyResultMsg string) (string, error) {
 	resp, err := c.model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
 		return "", fmt.Errorf("failed to generate content: %w", err)
