@@ -84,6 +84,7 @@ export const POST_TO_TWITTER = gql`
 
 export interface TwitterPostInput {
   text: string
+  imageUrl?: string
   addHashtag?: boolean
   addDisclaimer?: boolean
 }
@@ -101,4 +102,50 @@ export interface PostToTwitterData {
 
 export interface PostToTwitterVariables {
   input: TwitterPostInput
+}
+
+/**
+ * Mutation to generate an image from inflammatory text
+ */
+export const GENERATE_IMAGE = gql`
+  mutation GenerateImage($input: GenerateImageInput!) {
+    generateImage(input: $input) {
+      imageUrl
+      prompt
+      generatedAt
+    }
+  }
+`
+
+export interface GenerateImageInput {
+  text: string
+  style?: ImageStyle
+  aspectRatio?: AspectRatio
+}
+
+export enum ImageStyle {
+  REALISTIC = 'REALISTIC',
+  ILLUSTRATION = 'ILLUSTRATION',
+  MEME = 'MEME',
+  DRAMATIC = 'DRAMATIC',
+}
+
+export enum AspectRatio {
+  SQUARE = 'SQUARE',
+  LANDSCAPE = 'LANDSCAPE',
+  PORTRAIT = 'PORTRAIT',
+}
+
+export interface GenerateImageResult {
+  imageUrl: string
+  prompt: string
+  generatedAt: string
+}
+
+export interface GenerateImageData {
+  generateImage: GenerateImageResult
+}
+
+export interface GenerateImageVariables {
+  input: GenerateImageInput
 }

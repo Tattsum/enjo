@@ -445,20 +445,37 @@ GCS_BUCKET_NAME=enjo-generated-images
    - [x] すべてのテストがパス（`make backend-check`）
    - [x] カバレッジ: twitter 89.8%
 
-### Phase 4: フロントエンド
+### Phase 4: フロントエンド ✅ 完了
 
 5. **ImageGenerator コンポーネント**
-   - [ ] テスト作成: `frontend/src/components/ImageGenerator.test.tsx`
-   - [ ] コンポーネント実装
-   - [ ] GraphQLクエリ統合
+   - [x] テスト作成: `frontend/src/components/__tests__/ImageGenerator.test.tsx` (6 tests)
+   - [x] GraphQLクエリ定義: `GENERATE_IMAGE` ミューテーション追加
+   - [x] TypeScript型定義: GenerateImageInput, ImageStyle, AspectRatio
+   - [x] コンポーネント実装: `frontend/src/components/ImageGenerator.tsx`
+     - スタイル選択セレクター（ミーム風/リアル調/イラスト調/ドラマチック）
+     - アスペクト比（SQUARE デフォルト）
+     - ローディング状態管理
+     - エラーハンドリング
+     - 画像生成完了時のコールバック
 
 6. **ImagePreview コンポーネント**
-   - [ ] テスト作成: `frontend/src/components/ImagePreview.test.tsx`
-   - [ ] コンポーネント実装
+   - [x] テスト作成: `frontend/src/components/__tests__/ImagePreview.test.tsx` (9 tests)
+   - [x] コンポーネント実装: `frontend/src/components/ImagePreview.tsx`
+     - 画像表示（炎上カラーボーダー付き）
+     - プロンプト表示（オプション）
+     - ダウンロードボタン（オプション）
+     - 再生成ボタン（オプション）
 
 7. **統合**
-   - [ ] ResultDisplay コンポーネントに統合
-   - [ ] TwitterPostButton の画像対応
+   - [x] ResultDisplay コンポーネントに統合
+     - 画像生成セクション追加（紫〜ピンクのグラデーション）
+     - ImageGenerator と ImagePreview の切り替え表示
+     - 画像ダウンロード機能実装
+     - 画像再生成機能実装
+   - [x] TwitterPostButton の画像対応
+     - `imageUrl` プロパティ追加
+     - TwitterPostInput 型定義更新
+     - 画像付き投稿に対応
 
 ### Phase 5: E2Eテスト
 
@@ -636,9 +653,130 @@ $ make backend-check
   - すべてのテストがパス（`make backend-check`）
   - カバレッジ: twitter 89.8%, graph 47.3%
 
-- ⏳ **Phase 4**: フロントエンド（未着手）
-  - ImageGeneratorコンポーネント
-  - ImagePreviewコンポーネント
-  - GraphQLクエリ統合
+- ✅ **Phase 4**: フロントエンド（完了 - 2025-10-17）
+  - `frontend/src/components/ImageGenerator.tsx` - 画像生成UIコンポーネント
+  - `frontend/src/components/ImagePreview.tsx` - 画像プレビューコンポーネント
+  - `frontend/src/lib/graphql/queries.ts` - GENERATE_IMAGEミューテーション追加
+  - `frontend/src/components/ResultDisplay.tsx` - 画像生成セクション統合
+  - `frontend/src/components/TwitterPostButton.tsx` - 画像URL対応
+  - `frontend/src/components/__tests__/ImageGenerator.test.tsx` - 6テストケース
+  - `frontend/src/components/__tests__/ImagePreview.test.tsx` - 9テストケース
+  - すべてのテストがパス（ESLint 1 warning: next/image推奨のみ）
+  - TypeScript型チェック: エラーなし
 
-TDDに従い、小さく作って育てる方針で段階的に実装しました。Phase 1, 2, 3は完全にテスト駆動（Red-Green-Refactor）で実装され、すべてのテストがパスしています。
+TDDに従い、小さく作って育てる方針で段階的に実装しました。**Phase 1, 2, 3, 4すべてが完全にテスト駆動（Red-Green-Refactor）で実装され、すべてのテストがパスしています。**
+
+---
+
+## Phase 4 フロントエンド実装詳細（2025-10-17完了）
+
+### 実装ファイル一覧
+
+#### コンポーネント
+
+- `frontend/src/components/ImageGenerator.tsx` - 画像生成UIコンポーネント（99行）
+- `frontend/src/components/ImagePreview.tsx` - 画像プレビューコンポーネント（62行）
+- `frontend/src/components/ResultDisplay.tsx` - 画像生成セクション統合（更新）
+- `frontend/src/components/TwitterPostButton.tsx` - 画像URL対応（更新）
+
+#### テストファイル
+
+- `frontend/src/components/__tests__/ImageGenerator.test.tsx` - 6テストケース
+- `frontend/src/components/__tests__/ImagePreview.test.tsx` - 9テストケース
+
+#### GraphQL定義
+
+- `frontend/src/lib/graphql/queries.ts` - GENERATE_IMAGEミューテーション、型定義追加
+
+### TDD開発サイクル
+
+すべてのコードはTDD（Red-Green-Refactor）サイクルに従って実装：
+
+1. **Red**: テストを先に書いて失敗を確認
+2. **Green**: 最小限の実装でテストをパス
+3. **Refactor**: コードをリファクタリング
+4. **Check**: `npm run lint && npm run type-check && npm run test` で品質確認
+
+### フロントエンドテスト結果
+
+```bash
+$ npm run lint && npm run type-check && npm run test
+✅ ESLint: 1 warning（next/image推奨 - 機能には影響なし）
+✅ TypeScript: 型エラー 0件
+✅ すべてのテスト: PASS
+   - ImageGenerator: 6 tests passed
+   - ImagePreview: 9 tests passed
+   - 既存テスト: すべてパス
+```
+
+### コンポーネント設計詳細
+
+#### ImageGeneratorコンポーネント
+
+**責務**: 画像生成のUIとロジック
+
+**Props**:
+
+- `inflammatoryText: string` - 炎上テキスト（必須）
+- `onImageGenerated?: (imageUrl: string) => void` - 生成完了コールバック
+
+**機能**:
+
+- スタイル選択（4種類: ミーム風/リアル調/イラスト調/ドラマチック）
+- GraphQL generateImage ミューテーション呼び出し
+- ローディング状態表示
+- エラーハンドリング
+
+#### ImagePreviewコンポーネント
+
+**責務**: 生成された画像の表示と操作
+
+**Props**:
+
+- `imageUrl: string` - 画像URL（必須）
+- `prompt?: string` - 使用したプロンプト（オプション）
+- `onDownload?: () => void` - ダウンロードボタンコールバック
+- `onRegenerate?: () => void` - 再生成ボタンコールバック
+
+**機能**:
+
+- 画像表示（炎上カラーボーダー付き）
+- プロンプト表示
+- ダウンロード・再生成ボタン
+
+### コンポーネント統合実装
+
+#### ResultDisplayへの統合
+
+```typescript
+// 画像生成セクションを追加
+{!generatedImageUrl ? (
+  <ImageGenerator
+    inflammatoryText={result.inflammatory}
+    onImageGenerated={handleImageGenerated}
+  />
+) : (
+  <ImagePreview
+    imageUrl={generatedImageUrl}
+    onDownload={handleDownloadImage}
+    onRegenerate={handleRegenerateImage}
+  />
+)}
+```
+
+#### TwitterPostButtonへの統合
+
+```typescript
+// imageUrl プロパティ追加
+<TwitterPostButton
+  text={result.inflammatory}
+  imageUrl={generatedImageUrl || undefined}
+/>
+```
+
+### 実装上の注意点
+
+- 画像URLはData URLまたはHTTP(S) URLをサポート
+- 画像ダウンロードは自動的にタイムスタンプ付きファイル名を生成
+- 再生成時は状態をクリアして ImageGenerator に戻る
+- ESLintの `@next/next/no-img-element` 警告は意図的（動的Data URLのため）

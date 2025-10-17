@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import TwitterPostButton from './TwitterPostButton';
+import ImageGenerator from './ImageGenerator';
+import ImagePreview from './ImagePreview';
 
 interface ResultDisplayProps {
   result: {
@@ -11,6 +13,7 @@ interface ResultDisplayProps {
 
 const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
   const [copied, setCopied] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
 
   const handleCopy = async () => {
     try {
@@ -20,6 +23,25 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
     } catch (error) {
       console.error('Failed to copy text:', error);
     }
+  };
+
+  const handleImageGenerated = (imageUrl: string) => {
+    setGeneratedImageUrl(imageUrl);
+  };
+
+  const handleDownloadImage = () => {
+    if (!generatedImageUrl) return;
+
+    const link = document.createElement('a');
+    link.href = generatedImageUrl;
+    link.download = `enjo-image-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleRegenerateImage = () => {
+    setGeneratedImageUrl(null);
   };
 
   return (
@@ -72,9 +94,30 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
               )}
             </button>
 
-            <TwitterPostButton text={result.inflammatory} />
+            <TwitterPostButton text={result.inflammatory} imageUrl={generatedImageUrl || undefined} />
           </div>
         </div>
+      </div>
+
+      {/* Image Generation Section */}
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-purple-800 mb-4 flex items-center gap-2">
+          <span>🎨</span>
+          <span>画像生成</span>
+        </h3>
+
+        {!generatedImageUrl ? (
+          <ImageGenerator
+            inflammatoryText={result.inflammatory}
+            onImageGenerated={handleImageGenerated}
+          />
+        ) : (
+          <ImagePreview
+            imageUrl={generatedImageUrl}
+            onDownload={handleDownloadImage}
+            onRegenerate={handleRegenerateImage}
+          />
+        )}
       </div>
 
       {/* Explanation */}

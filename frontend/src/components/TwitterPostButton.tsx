@@ -6,12 +6,14 @@ import { POST_TO_TWITTER, PostToTwitterData, PostToTwitterVariables } from '@/li
 
 interface TwitterPostButtonProps {
   text: string
+  imageUrl?: string
   addHashtag?: boolean
   addDisclaimer?: boolean
 }
 
 const TwitterPostButton: React.FC<TwitterPostButtonProps> = ({
   text,
+  imageUrl,
   addHashtag = true,
   addDisclaimer = true,
 }) => {
@@ -41,7 +43,7 @@ const TwitterPostButton: React.FC<TwitterPostButtonProps> = ({
   const handlePost = () => {
     postToTwitter({
       variables: {
-        input: { text, addHashtag, addDisclaimer },
+        input: { text, imageUrl, addHashtag, addDisclaimer },
       },
     })
   }
