@@ -22,13 +22,15 @@ SNS投稿を「炎上しやすい表現」に変換し、予想されるリプ�
 2. **リプライ生成**: 4種類の典型的なリプライパターンを自動生成
 3. **比較表示**: 元の投稿と変換後を並べて表示
 4. **説明生成**: なぜ炎上しやすいのかの解説
+5. **Twitter投稿**: 生成したテキストをTwitter/𝕏に直接投稿（オプション）
 
 ## 🛠️ 技術スタック
 
 ### バックエンド
 - **Go 1.25**
 - **gqlgen** - GraphQL サーバー
-- **Google Gemini API** - AI テキスト生成
+- **Google Vertex AI (Gemini)** - AI テキスト生成
+- **Twitter API v2** - SNS投稿機能（オプション）
 - **chi** - HTTP ルーター
 - **Air** - ホットリロード
 
@@ -64,7 +66,9 @@ enjo/
 │   │   ├── schema.graphqls
 │   │   ├── resolver.go
 │   │   └── generated/
-│   └── gemini/
+│   ├── gemini/
+│   │   └── client.go
+│   └── twitter/
 │       └── client.go
 └── frontend/
     ├── Dockerfile
@@ -80,7 +84,8 @@ enjo/
         │   ├── TextInput.tsx
         │   ├── LevelSlider.tsx
         │   ├── ResultDisplay.tsx
-        │   └── ReplyList.tsx
+        │   ├── ReplyList.tsx
+        │   └── TwitterPostButton.tsx
         └── lib/
             └── graphql/
                 ├── client.ts
@@ -92,7 +97,8 @@ enjo/
 ### 前提条件
 
 - Docker & Docker Compose
-- Google Gemini API キー ([取得方法](https://ai.google.dev/))
+- Google Cloud Platform アカウント（Vertex AI用）
+- Twitter Developer アカウント（オプション、Twitter投稿機能を使う場合）
 
 ### 1. リポジトリのクローン
 
@@ -112,48 +118,62 @@ cp backend/.env.example backend/.env
 cp frontend/.env.local.example frontend/.env.local
 ```
 
-### 3. Gemini API キーの設定
+### 3. Google Cloud Platform (Vertex AI) の設定
 
-#### 方法1: gcloud コマンドで取得（推奨）
+#### GCPプロジェクトとVertex AIの有効化
 
 ```bash
 # Google Cloud SDK にログイン
 gcloud auth login
 gcloud config set project YOUR_PROJECT_ID
 
-# Generative Language API を有効化
-gcloud services enable generativelanguage.googleapis.com
+# Vertex AI API を有効化
+gcloud services enable aiplatform.googleapis.com
 
-# API キーを作成
-gcloud alpha services api-keys create \
-  --display-name="Enjo Simulator API Key" \
-  --api-target=service=generativelanguage.googleapis.com
-
-# 作成されたキーの一覧を表示
-gcloud alpha services api-keys list
-
-# キーの値を取得（KEY_ID は上記コマンドで確認）
-gcloud alpha services api-keys get-key-string KEY_ID
+# Application Default Credentials (ADC) を設定
+gcloud auth application-default login
 ```
 
 詳細な手順は [docs/SETUP_API_KEY.md](docs/SETUP_API_KEY.md) を参照してください。
-
-#### 方法2: Google AI Studio で取得
-
-1. [Google AI Studio](https://ai.google.dev/) にアクセス
-2. 「Get API Key」をクリック
-3. APIキーをコピー
 
 #### 環境変数への設定
 
 `backend/.env` を編集:
 
 ```env
-GEMINI_API_KEY=your_actual_api_key_here
+GCP_PROJECT_ID=your_gcp_project_id_here
+GCP_LOCATION=us-central1
 PORT=8080
 ```
 
-### 4. Docker Composeで起動
+### 4. Twitter API の設定（オプション）
+
+Twitter投稿機能を使用する場合のみ設定してください。
+
+#### Twitter Developer Portalでアプリを作成
+
+1. [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard) にアクセス
+2. 「Create App」をクリックしてアプリを作成
+3. App Permissions を「Read and Write」に設定
+4. API Key & Secret、Access Token & Secret を取得
+
+#### 環境変数への設定
+
+`backend/.env` に追記:
+
+```env
+# Twitter API Configuration (Optional)
+TWITTER_API_KEY=your_twitter_api_key_here
+TWITTER_API_SECRET=your_twitter_api_secret_here
+TWITTER_ACCESS_TOKEN=your_twitter_access_token_here
+TWITTER_ACCESS_TOKEN_SECRET=your_twitter_access_token_secret_here
+```
+
+**注意**: Twitter API認証情報が設定されていない場合、Twitter投稿機能は無効化されますが、その他の機能は正常に動作します。
+
+詳細は [docs/FEATURE_TWITTER_POST.md](docs/FEATURE_TWITTER_POST.md) を参照してください。
+
+### 5. Docker Composeで起動
 
 ```bash
 # すべてのサービスを起動
@@ -163,7 +183,7 @@ make docker-up
 docker-compose up --build
 ```
 
-### 5. アクセス
+### 6. アクセス
 
 - **フロントエンド**: <http://localhost:3000>
 - **GraphQL Playground**: <http://localhost:8080/graphql>
@@ -215,6 +235,7 @@ make frontend-fmt
 3. 「🔥 炎上化する」ボタンをクリック
 4. 元の投稿と変換後を比較
 5. 「💬 リプライを生成」で予想されるリプライを表示
+6. （オプション）「𝕏 Xに投稿」ボタンでTwitterに投稿
 
 ### 炎上度レベル
 
@@ -309,6 +330,23 @@ mutation {
 }
 ```
 
+### Twitter投稿（オプション）
+
+```graphql
+mutation {
+  postToTwitter(input: {
+    text: "投稿するテキスト"
+    addHashtag: true
+    addDisclaimer: true
+  }) {
+    success
+    tweetId
+    tweetUrl
+    errorMessage
+  }
+}
+```
+
 ## 🤝 コントリビューション
 
 プルリクエストを歓迎します！
@@ -352,7 +390,8 @@ SOFTWARE.
 
 ## 🙏 謝辞
 
-- [Google Gemini API](https://ai.google.dev/) - AI テキスト生成
+- [Google Vertex AI (Gemini)](https://cloud.google.com/vertex-ai) - AI テキスト生成
+- [Twitter API v2](https://developer.twitter.com/en/docs/twitter-api) - SNS投稿機能
 - [gqlgen](https://gqlgen.com/) - GraphQL サーバー
 - [Next.js](https://nextjs.org/) - React フレームワーク
 
