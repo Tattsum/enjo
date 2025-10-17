@@ -63,7 +63,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
           id="image-style"
           value={style}
           onChange={(e) => setStyle(e.target.value as ImageStyle)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-fire-500"
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-fire-500 text-gray-900 bg-white"
         >
           <option value={ImageStyle.MEME}>ミーム風</option>
           <option value={ImageStyle.REALISTIC}>リアル調</option>
