@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - /app/tmp
+    command: >
+      sh -c "
+        if [ ! -f /app/go.mod ]; then
+          cd /app && go mod init github.com/Tattsum/enjo/backend
+        fi &&
+        go mod tidy &&
+        go run /app/main.go
+      "
+    depends_on:
+      - frontend
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env.local
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev

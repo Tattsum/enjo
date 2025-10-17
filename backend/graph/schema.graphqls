@@ -1,0 +1,33 @@
+# GraphQL schema definition for Enjo Simulator
+
+type Query {
+  health: String!
+}
+
+type Mutation {
+  generateInflammatoryText(input: GenerateInput!): GenerateResult!
+  generateReplies(text: String!): [Reply!]!
+}
+
+input GenerateInput {
+  originalText: String!
+  level: Int! # 1-5
+}
+
+type GenerateResult {
+  inflammatoryText: String!
+  explanation: String
+}
+
+type Reply {
+  id: ID!
+  type: ReplyType!
+  content: String!
+}
+
+enum ReplyType {
+  LOGICAL_CRITICISM
+  NITPICKING
+  OFF_TARGET
+  EXCESSIVE_DEFENSE
+}

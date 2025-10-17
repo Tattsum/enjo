@@ -1,0 +1,281 @@
+package graph
+
+import (
+	"context"
+	"errors"
+	"strings"
+	"testing"
+
+	"github.com/Tattsum/enjo/backend/graph/model"
+)
+
+// MockGeminiClient is a mock implementation of the Gemini client for testing
+type MockGeminiClient struct {
+	GenerateInflammatoryTextFunc func(ctx context.Context, original string, level int) (string, error)
+	GenerateExplanationFunc      func(ctx context.Context, original, inflammatory string) (string, error)
+	GenerateReplyFunc            func(ctx context.Context, text, replyType string) (string, error)
+}
+
+func (m *MockGeminiClient) GenerateInflammatoryText(ctx context.Context, original string, level int) (string, error) {
+	if m.GenerateInflammatoryTextFunc != nil {
+		return m.GenerateInflammatoryTextFunc(ctx, original, level)
+	}
+	return "", errors.New("not implemented")
+}
+
+func (m *MockGeminiClient) GenerateExplanation(ctx context.Context, original, inflammatory string) (string, error) {
+	if m.GenerateExplanationFunc != nil {
+		return m.GenerateExplanationFunc(ctx, original, inflammatory)
+	}
+	return "", errors.New("not implemented")
+}
+
+func (m *MockGeminiClient) GenerateReply(ctx context.Context, text, replyType string) (string, error) {
+	if m.GenerateReplyFunc != nil {
+		return m.GenerateReplyFunc(ctx, text, replyType)
+	}
+	return "", errors.New("not implemented")
+}
+
+func TestQueryResolver_Health(t *testing.T) {
+	tests := []struct {
+		name    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "returns OK",
+			want:    "OK",
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Resolver{}
+			resolver := &queryResolver{r}
+
+			got, err := resolver.Health(context.Background())
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Health() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Health() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMutationResolver_GenerateInflammatoryText(t *testing.T) {
+	tests := []struct {
+		name       string
+		input      model.GenerateInput
+		mockText   string
+		mockExpl   string
+		mockErr    error
+		wantText   string
+		wantExpl   string
+		wantErr    bool
+		wantErrMsg string
+	}{
+		{
+			name: "successfully generates inflammatory text",
+			input: model.GenerateInput{
+				OriginalText: "今日はいい天気ですね",
+				Level:        3,
+			},
+			mockText: "今日は最高の天気なのに働いてるやつwww",
+			mockExpl: "労働者を見下すような表現になっており、多くの人の反感を買う可能性があります。",
+			mockErr:  nil,
+			wantText: "今日は最高の天気なのに働いてるやつwww",
+			wantExpl: "労働者を見下すような表現になっており、多くの人の反感を買う可能性があります。",
+			wantErr:  false,
+		},
+		{
+			name: "returns error when level is out of range",
+			input: model.GenerateInput{
+				OriginalText: "テスト投稿",
+				Level:        6,
+			},
+			wantErr:    true,
+			wantErrMsg: "level must be between 1 and 5",
+		},
+		{
+			name: "returns error when Gemini API fails",
+			input: model.GenerateInput{
+				OriginalText: "テスト投稿",
+				Level:        3,
+			},
+			mockErr:    errors.New("API error"),
+			wantErr:    true,
+			wantErrMsg: "failed to generate inflammatory text",
+		},
+	}
+
+	for _, tt := range tests {
+		// capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := createMockClientForInflammatory(tt.mockErr, tt.mockText, tt.mockExpl)
+			r := &Resolver{geminiClient: mockClient}
+			resolver := &mutationResolver{r}
+
+			got, err := resolver.GenerateInflammatoryText(context.Background(), tt.input)
+
+			assertInflammatoryTextResult(t, got, err, tt.wantErr, tt.wantErrMsg, tt.wantText, tt.wantExpl)
+		})
+	}
+}
+
+func createMockClientForInflammatory(mockErr error, mockText, mockExpl string) *MockGeminiClient {
+	return &MockGeminiClient{
+		GenerateInflammatoryTextFunc: func(_ context.Context, _ string, _ int) (string, error) {
+			if mockErr != nil {
+				return "", mockErr
+			}
+			return mockText, nil
+		},
+		GenerateExplanationFunc: func(_ context.Context, _, _ string) (string, error) {
+			if mockErr != nil {
+				return "", mockErr
+			}
+			return mockExpl, nil
+		},
+	}
+}
+
+func assertInflammatoryTextResult(t *testing.T, got *model.GenerateResult, err error, wantErr bool, wantErrMsg, wantText, wantExpl string) {
+	t.Helper()
+
+	if (err != nil) != wantErr {
+		t.Errorf("GenerateInflammatoryText() error = %v, wantErr %v", err, wantErr)
+		return
+	}
+
+	if wantErr {
+		if err != nil && wantErrMsg != "" && !strings.Contains(err.Error(), wantErrMsg) {
+			t.Errorf("GenerateInflammatoryText() error = %v, want error containing %v", err, wantErrMsg)
+		}
+		return
+	}
+
+	if got == nil {
+		t.Fatal("GenerateInflammatoryText() returned nil result")
+	}
+
+	if got.InflammatoryText != wantText {
+		t.Errorf("GenerateInflammatoryText().InflammatoryText = %v, want %v", got.InflammatoryText, wantText)
+	}
+
+	if got.Explanation != nil && *got.Explanation != wantExpl {
+		t.Errorf("GenerateInflammatoryText().Explanation = %v, want %v", *got.Explanation, wantExpl)
+	}
+}
+
+func TestMutationResolver_GenerateReplies(t *testing.T) {
+	tests := []struct {
+		name       string
+		text       string
+		mockReply  string
+		mockErr    error
+		wantCount  int
+		wantErr    bool
+		wantErrMsg string
+	}{
+		{
+			name:      "successfully generates 4 replies",
+			text:      "炎上しそうな投稿",
+			mockReply: "これはテストリプライです",
+			mockErr:   nil,
+			wantCount: 4,
+			wantErr:   false,
+		},
+		{
+			name:       "returns error when text is empty",
+			text:       "",
+			wantErr:    true,
+			wantErrMsg: "text is required",
+		},
+		{
+			name:       "returns error when Gemini API fails",
+			text:       "テスト投稿",
+			mockErr:    errors.New("API error"),
+			wantErr:    true,
+			wantErrMsg: "failed to generate reply",
+		},
+	}
+
+	for _, tt := range tests {
+		// capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := createMockClientForReplies(tt.mockErr, tt.mockReply)
+			r := &Resolver{geminiClient: mockClient}
+			resolver := &mutationResolver{r}
+
+			got, err := resolver.GenerateReplies(context.Background(), tt.text)
+
+			assertRepliesResult(t, got, err, tt.wantErr, tt.wantErrMsg, tt.wantCount)
+		})
+	}
+}
+
+func createMockClientForReplies(mockErr error, mockReply string) *MockGeminiClient {
+	return &MockGeminiClient{
+		GenerateReplyFunc: func(_ context.Context, _, _ string) (string, error) {
+			if mockErr != nil {
+				return "", mockErr
+			}
+			return mockReply, nil
+		},
+	}
+}
+
+func assertRepliesResult(t *testing.T, got []*model.Reply, err error, wantErr bool, wantErrMsg string, wantCount int) {
+	t.Helper()
+
+	if (err != nil) != wantErr {
+		t.Errorf("GenerateReplies() error = %v, wantErr %v", err, wantErr)
+		return
+	}
+
+	if wantErr {
+		if err != nil && wantErrMsg != "" && !strings.Contains(err.Error(), wantErrMsg) {
+			t.Errorf("GenerateReplies() error = %v, want error containing %v", err, wantErrMsg)
+		}
+		return
+	}
+
+	if len(got) != wantCount {
+		t.Errorf("GenerateReplies() returned %d replies, want %d", len(got), wantCount)
+	}
+
+	validateReplyTypes(t, got)
+}
+
+func validateReplyTypes(t *testing.T, replies []*model.Reply) {
+	t.Helper()
+
+	replyTypes := make(map[model.ReplyType]bool)
+	for _, reply := range replies {
+		if reply.ID == "" {
+			t.Error("GenerateReplies() reply has empty ID")
+		}
+		if reply.Content == "" {
+			t.Error("GenerateReplies() reply has empty Content")
+		}
+		replyTypes[reply.Type] = true
+	}
+
+	expectedTypes := []model.ReplyType{
+		model.ReplyTypeLogicalCriticism,
+		model.ReplyTypeNitpicking,
+		model.ReplyTypeOffTarget,
+		model.ReplyTypeExcessiveDefense,
+	}
+
+	for _, expectedType := range expectedTypes {
+		if !replyTypes[expectedType] {
+			t.Errorf("GenerateReplies() missing reply type %v", expectedType)
+		}
+	}
+}

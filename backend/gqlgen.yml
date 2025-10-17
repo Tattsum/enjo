@@ -1,0 +1,44 @@
+# gqlgen configuration file
+
+# Schema locations
+schema:
+  - graph/schema.graphqls
+
+# Generated code locations
+exec:
+  filename: graph/generated/generated.go
+  package: generated
+
+# Model locations
+model:
+  filename: graph/model/models_gen.go
+  package: model
+
+# Resolver locations
+resolver:
+  layout: follow-schema
+  dir: graph
+  package: graph
+  filename_template: "{name}.resolvers.go"
+
+# Model configuration
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+  String:
+    model:
+      - github.com/99designs/gqlgen/graphql.String
+
+# Autobind models from schema
+# autobind:
+#   - github.com/Tattsum/enjo/backend/graph/model
+
+# Skip running `go mod tidy` when generating
+skip_mod_tidy: false
+
+# Optional: customize the structure field resolver template
+# omit_slice_element_pointers: false

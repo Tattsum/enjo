@@ -1,0 +1,271 @@
+# https://golangci-lint.run/usage/configuration/
+# ref: https://gist.github.com/taichi/8c214eeec8e66e0edc6f733a22180d8a
+version: "2"
+
+linters:
+  default: none # 適用するものを明示的に列挙するため、デフォルトのルールを全て無効化。
+  enable:
+    # https://github.com/timakin/bodyclose
+    # http.ResponseのCloseが呼び出されているかどうかを検査する
+    - bodyclose
+
+    # https://github.com/OpenPeeDeeP/depguard
+    - depguard
+
+    # https://github.com/mibk/dupl
+    # コードのコピペを検出するルール
+    - dupl
+
+    # https://github.com/kisielk/errcheck
+    # 関数の戻り値としてErrorがある場合に、それに対する処理を実施していないものを検出するルール
+    - errcheck
+
+    # https://github.com/ultraware/funlen
+    - funlen
+
+    # https://github.com/jgautheron/goconst
+    - goconst
+
+    # https://github.com/go-critic/go-critic
+    - gocritic
+
+    # https://github.com/tommy-muehle/go-mnd
+    - mnd
+
+    # https://github.com/securego/gosec 脆弱性になりうるコードを検出するルール
+    - gosec
+
+    # https://github.com/golang/go/blob/master/src/cmd/vet/main.go
+    # go標準のlintツール
+    - govet
+
+    # https://github.com/gordonklaus/ineffassign
+    # 無効な代入を検出するルール
+    - ineffassign
+
+    # https://github.com/client9/misspell
+    - misspell
+
+    # https://github.com/alexkohler/nakedret
+    # 大きな関数（デフォルト値は30行）において Named Result Parameters を使っている場合エラーにするルール
+    - nakedret
+
+    # https://github.com/sonatard/noctx
+    # net/httpのモジュールを使う際にContextを渡していないものを検出するルール
+    - noctx
+
+    # https://github.com/golangci/golangci-lint/tree/master/pkg/golinters/nolintlint
+    - nolintlint
+
+    # https://github.com/jingyugao/rowserrcheck
+    # database/sql.Rows の rows.Err()をエラーチェックしているか検査するルール
+    - rowserrcheck
+
+    # https://staticcheck.io/
+    # デファクトスタンダードな静的検査ツール
+    - staticcheck
+
+    # https://github.com/mdempsky/unconvert
+    # 不必要な型チェックを検出するルール
+    - unconvert
+
+    # https://github.com/mvdan/unparam
+    # 関数の引数のうち使われていないものを検出するルール
+    - unparam
+
+    # https://github.com/dominikh/go-tools/tree/master/unused
+    # 使われていない定数、変数、関数、型を検出するルール
+    - unused
+
+    # https://github.com/polyfloyd/go-errorlint
+    # エラー処理のアンチパターンを検出する
+    - errorlint
+
+    # https://github.com/ultraware/whitespace
+    # 空白文字を検出するルール
+    - whitespace
+
+    # https://github.com/breml/bidichk
+    # 危険なUnicode文字シーケンスをチェックする
+    - bidichk
+
+    # https://github.com/karamaru-alpha/copyloopvar
+    # 1.22からloopvarの問題は直ったので不必要に a := a してる箇所を検出する
+    - copyloopvar
+
+    # https://github.com/charithe/durationcheck
+    # time.Duration * time.Duration で危険な可能性のあるコードを検出する
+    - durationcheck
+
+    # https://github.com/leighmcculloch/gocheckcompilerdirectives
+    # goコンパイラディレクティブ(//go: から始まるやつ)の書き方を検査する
+    - gocheckcompilerdirectives
+
+    # https://github.com/ckaznocha/intrange
+    # 1.22から for n := range 10 みたいな書き方ができるようになったのでそうできそうなところを検出する
+    - intrange
+
+    # https://github.com/butuzov/mirror
+    # bytes/stringsで同名の関数があるので間違った使い方をしていないかを検出する
+    - mirror
+
+    # https://github.com/stbenjam/no-sprintf-host-port
+    # fmt.Sprintf("%s:%d", host, port) は net.JoinHostPort(host, port) で置き換えるべき
+    - nosprintfhostport
+
+    # https://github.com/catenacyber/perfsprint
+    # fmt.Sprintfを使っている箇所で他に専用の関数が用意されている等、パフォーマンスに影響する可能性がある箇所を検出する
+    - perfsprint
+
+    # https://github.com/alexkohler/prealloc
+    # スライスの初期化時に容量を指定していない場合を検出する
+    - prealloc
+
+    # https://github.com/nishanths/predeclared
+    # 予約語を変数名として使っている箇所を検出する
+    - predeclared
+
+    # https://github.com/curioswitch/go-reassign
+    # パッケージ変数の再代入を検出する
+    - reassign
+
+    # https://github.com/mgechev/revive
+    # golintの再実装版。様々なルールがある
+    - revive
+
+    # https://github.com/ryanrolds/sqlclosecheck
+    # sql.Rows, sql.Stmt, sqlx.NamedStmt, pgx.Query などのクローズ漏れを検出する
+    - sqlclosecheck
+
+    # https://github.com/ldez/usetesting
+    # testing ライブラリの関数を使うべき箇所を検出する
+    - usetesting
+
+    # https://github.com/Antonboom/testifylint
+    # testifyのアンチパターンを検出する
+    - testifylint
+
+    # https://github.com/kulti/thelper
+    # テストのヘルパー関数内で t.Helper() を呼んでいない箇所を検出する
+    - thelper
+
+    # https://github.com/sashamelentyev/usestdlibvars
+    # 標準のパッケージ変数や定数を使える箇所を指摘する
+    - usestdlibvars
+
+    # https://github.com/sanposhiho/wastedassign
+    # 定義されたあとに再代入されるなどで無駄に定義している箇所を検出する
+    - wastedassign
+
+  settings:
+    depguard: # packagesに宣言されているモジュールの取り扱いに関するルール
+      rules:
+        main:
+          deny:
+            - pkg: github.com/x/errors
+              desc: エラー処理は標準のerrorsを使って下さい
+            - pkg: github.com/pkg/errors
+              desc: エラー処理は標準のerrorsを使って下さい
+    dupl: # コードのコピペを検出するルール
+      threshold: 100
+    funlen: # 閾値を越えて大きすぎる関数を検出するルール
+      lines: 100
+      statements: 50
+    goconst: # 繰り返し使われている文字列定数を検出するルール
+      min-len: 2
+      min-occurrences: 2
+    gocritic: # 意見が強いルールが多数含まれるルールの集合
+      enabled-tags:
+        - diagnostic # バグと思われるコードの検出
+        - experimental # 実験的なルール
+        - performance # パフォーマンスに悪い影響があるコードを検出
+      disabled-checks:
+        - commentedOutCode # 日本語で誤検知するので無効化
+        - commentFormatting # autofixできないので無効化
+        - ifElseChain # if/else if/elseをswitchで置き換えることを強制しない
+        - whyNoLint # nolintlint と重複しているため無効化
+        - yodaStyleExpr # 比較演算の左辺値をどう書くかは仕様書と併せるべき
+    mnd: # マジックナンバーを検出するルール
+      checks:
+        - argument
+        - case
+        - condition
+        - return
+    govet: # go標準の検査
+      enable-all: true
+      disable:
+        - fieldalignment # 構造体のフィールド順序の最適化は可読性を優先
+    misspell: # 典型的な英語のスペルミスを検出するルール
+      locale: US
+    nolintlint: # nolintディレクティブでlintチェックを無効化する際のルール
+      allow-unused: false
+      require-explanation: false
+      require-specific: false
+    perfsprint:
+      strconcat: false
+    revive:
+      enable-all-rules: true
+      rules:
+        - name: function-length
+          disabled: true
+        - name: line-length-limit
+          disabled: true
+        - name: add-constant
+          disabled: true
+        - name: cognitive-complexity
+          disabled: true
+        - name: flag-parameter
+          disabled: true
+        - name: comment-spacings
+          exclude:
+            - "**/*_test.go"
+        - name: context-as-argument
+          arguments:
+            - allowTypesBefore: "*testing.T"
+    usetesting:
+      os-setenv: true
+    testifylint:
+      disable-all: true
+      enable:
+        - require-error
+        - go-require
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - staticcheck
+        text: "SA1019:" # 非推奨の関数や変数の使用を許可
+      - path: _test\.go
+        linters:
+          - mnd # テストファイルではマジックナンバーを許可
+          - funlen # テストファイルでは関数の長さ制限を緩和
+          - goconst # テストファイルでは定数の繰り返しを許可
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+formatters:
+  enable:
+    # https://godoc.org/golang.org/x/tools/cmd/goimports
+    # go標準のimport文を並べ替える処理
+    - goimports
+
+    # https://github.com/mvdan/gofumpt
+    # gofmt の強化版
+    - gofumpt
+  exclusions:
+    generated: lax
+
+run:
+  timeout: 10m
+  tests: true
+  skip-dirs:
+    - generated # gqlgenで自動生成されたコードをスキップ
+    - vendor
