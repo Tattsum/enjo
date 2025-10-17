@@ -11,6 +11,7 @@ frontend/.env.local
 **/*secret*
 **/*key*.json
 credentials.json
+application_default_credentials.json
 
 # OS generated files
 .DS_Store

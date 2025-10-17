@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/generative-ai-go/genai"
-	"google.golang.org/api/option"
+	"cloud.google.com/go/vertexai/genai"
 )
 
 const (
@@ -16,40 +15,48 @@ const (
 	defaultTopK           = 40
 	defaultTopP           = 0.95
 	defaultMaxOutputToken = 1024
+	defaultModel          = "gemini-2.5-flash"
 )
 
-// Client is a Gemini API client for generating inflammatory text and replies
+// Client is a Vertex AI client for generating inflammatory text and replies
 type Client struct {
-	client *genai.Client
-	model  *genai.GenerativeModel
+	client    *genai.Client
+	model     *genai.GenerativeModel
+	projectID string
+	location  string
 }
 
-// NewClient creates a new Gemini API client
-func NewClient(ctx context.Context, apiKey string) (*Client, error) {
-	if apiKey == "" {
-		return nil, errors.New("API key is required")
+// NewClient creates a new Vertex AI client using Application Default Credentials
+func NewClient(ctx context.Context, projectID, location string) (*Client, error) {
+	if projectID == "" {
+		return nil, errors.New("GCP project ID is required")
+	}
+	if location == "" {
+		location = "us-central1" // Default location
 	}
 
-	client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
+	client, err := genai.NewClient(ctx, projectID, location)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
+		return nil, fmt.Errorf("failed to create Vertex AI client: %w", err)
 	}
 
-	model := client.GenerativeModel("gemini-2.0-flash-exp")
+	model := client.GenerativeModel(defaultModel)
 
 	// Configure the model for consistent output
 	model.SetTemperature(defaultTemperature)
-	model.SetTopK(defaultTopK)
+	model.SetTopK(int32(defaultTopK))
 	model.SetTopP(defaultTopP)
-	model.SetMaxOutputTokens(defaultMaxOutputToken)
+	model.SetMaxOutputTokens(int32(defaultMaxOutputToken))
 
 	return &Client{
-		client: client,
-		model:  model,
+		client:    client,
+		model:     model,
+		projectID: projectID,
+		location:  location,
 	}, nil
 }
 
-// Close closes the Gemini client
+// Close closes the Vertex AI client
 func (c *Client) Close() error {
 	return c.client.Close()
 }
@@ -105,7 +112,7 @@ func (c *Client) GenerateReply(ctx context.Context, text, replyType string) (str
 	return c.generateContent(ctx, prompt, "no reply generated")
 }
 
-// generateContent is a helper function to generate content from Gemini API
+// generateContent is a helper function to generate content from Vertex AI
 func (c *Client) generateContent(ctx context.Context, prompt, emptyResultMsg string) (string, error) {
 	resp, err := c.model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
@@ -192,7 +199,7 @@ SNSの投稿のような口調で、簡潔に（2-3文程度）生成してく�
 	return prompt
 }
 
-// extractTextFromResponse extracts text content from Gemini API response
+// extractTextFromResponse extracts text content from Vertex AI response
 func extractTextFromResponse(resp *genai.GenerateContentResponse) string {
 	if resp == nil {
 		return ""

@@ -63,10 +63,15 @@ func main() {
 		log.Println("Warning: .env file not found, using system environment variables")
 	}
 
-	// Get Gemini API key
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	if apiKey == "" {
-		log.Fatal("GEMINI_API_KEY environment variable is required")
+	// Get GCP configuration
+	projectID := os.Getenv("GCP_PROJECT_ID")
+	if projectID == "" {
+		log.Fatal("GCP_PROJECT_ID environment variable is required")
+	}
+
+	location := os.Getenv("GCP_LOCATION")
+	if location == "" {
+		location = "us-central1" // Default location
 	}
 
 	// Get port
@@ -75,11 +80,11 @@ func main() {
 		port = "8080"
 	}
 
-	// Initialize Gemini client
+	// Initialize Vertex AI client with ADC
 	ctx := context.Background()
-	geminiClient, err := gemini.NewClient(ctx, apiKey)
+	geminiClient, err := gemini.NewClient(ctx, projectID, location)
 	if err != nil {
-		log.Fatalf("Failed to create Gemini client: %v", err)
+		log.Fatalf("Failed to create Vertex AI client: %v", err)
 	}
 
 	// Setup router

@@ -9,11 +9,13 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/application_default_credentials.json
     env_file:
       - ./backend/.env
     volumes:
       - ./backend:/app
       - /app/tmp
+      - ./backend/application_default_credentials.json:/app/application_default_credentials.json:ro
     command: >
       sh -c "
         if [ ! -f /app/go.mod ]; then

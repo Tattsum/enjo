@@ -6,9 +6,10 @@
 
 - ✅ Docker Desktop がインストール・起動済み
 - ✅ Git がインストール済み
-- ⚠️ Gemini API キー（後述）
+- ✅ gcloud CLI がインストール済み（[インストール手順](https://cloud.google.com/sdk/docs/install)）
+- ⚠️ GCP プロジェクトと認証設定（後述）
 
-## 🏃 最速起動手順（API キーなし）
+## 🏃 最速起動手順
 
 ### 1. リポジトリをクローン
 
@@ -18,21 +19,55 @@ git clone https://github.com/Tattsum/enjo.git
 cd enjo
 ```
 
-### 2. 環境変数ファイルを作成
+### 2. GCP認証情報を設定
+
+Application Default Credentials (ADC) を取得します：
 
 ```bash
-# Makefileを使って自動作成
-make setup
+# GCPにログイン
+gcloud auth login
+
+# Application Default Credentialsを取得
+gcloud auth application-default login
+
+# 認証情報ファイルをプロジェクトにコピー
+cp ~/.config/gcloud/application_default_credentials.json backend/
 ```
 
-または手動で：
+### 3. 環境変数ファイルを設定
+
+`backend/.env` を編集してGCPプロジェクトIDを設定：
 
 ```bash
-cp backend/.env.example backend/.env
+# エディタで開く
+nano backend/.env
+```
+
+以下を確認・編集：
+
+```env
+GCP_PROJECT_ID=your-project-id  # ← あなたのGCPプロジェクトIDに変更
+GCP_LOCATION=us-central1
+PORT=8080
+```
+
+フロントエンドの環境変数も設定（既に存在する場合はスキップ）：
+
+```bash
 cp frontend/.env.local.example frontend/.env.local
 ```
 
-### 3. Docker Composeで起動
+### 4. Vertex AI APIを有効化
+
+```bash
+# あなたのプロジェクトIDを設定
+export PROJECT_ID="your-project-id"
+
+# Vertex AI APIを有効化
+gcloud services enable aiplatform.googleapis.com --project=$PROJECT_ID
+```
+
+### 5. Docker Composeで起動
 
 ```bash
 # すべてのサービスを起動（初回は5-10分かかります）
@@ -45,68 +80,13 @@ docker-compose up --build
 docker-compose up --build -d
 ```
 
-### 4. アクセス
+### 6. アクセス
 
 ブラウザで以下のURLを開いてください：
 
 - **フロントエンド**: http://localhost:3000
 - **GraphQL Playground**: http://localhost:8080/graphql
 - **バックエンド ヘルスチェック**: http://localhost:8080/health
-
-## ⚠️ 注意事項
-
-**API キーなしの場合:**
-- UIは表示されますが、実際のテキスト変換機能は動作しません
-- エラーメッセージ「GEMINI_API_KEY is not set」が表示されます
-
-**完全な機能を使うには:**
-- 次のセクション「Gemini API キーの設定」を参照してください
-
----
-
-## 🔑 Gemini API キーの設定（完全版）
-
-実際にテキスト変換機能を使用するには、Gemini API キーが必要です。
-
-### 方法1: Google AI Studio で取得（最も簡単）
-
-1. [Google AI Studio](https://aistudio.google.com/apikey) にアクセス
-2. 「Get API Key」または「Create API Key」をクリック
-3. APIキーをコピー
-
-### 方法2: gcloud コマンドで取得
-
-詳細は [docs/SETUP_API_KEY.md](./SETUP_API_KEY.md) を参照してください。
-
-### API キーを設定
-
-`backend/.env` ファイルを編集：
-
-```bash
-# エディタで開く
-nano backend/.env
-
-# または
-vim backend/.env
-```
-
-以下のように修正：
-
-```env
-# 取得したAPIキーに置き換える
-GEMINI_API_KEY=AIzaSy...your_actual_api_key_here
-PORT=8080
-```
-
-### サービスを再起動
-
-```bash
-# バックエンドのみ再起動
-docker-compose restart backend
-
-# すべてのログを確認
-docker-compose logs -f
-```
 
 ---
 
@@ -202,18 +182,35 @@ docker-compose down --rmi all
 docker-compose up --build
 ```
 
-### API キーエラー
+### 認証エラー
 
 ブラウザのコンソールまたはバックエンドログで以下を確認：
 
 ```bash
-docker-compose logs backend | grep -i "gemini\|api"
+docker-compose logs backend | grep -i "vertex\|gcp\|auth"
 ```
 
 エラー例：
-- `GEMINI_API_KEY is not set` → .envファイルを確認
-- `Invalid API key` → APIキーが正しいか確認
-- `API quota exceeded` → 使用制限を超えています
+
+- `GCP_PROJECT_ID is required` → .envファイルのプロジェクトIDを確認
+- `Failed to create Vertex AI client` → ADC認証情報を確認
+- `application_default_credentials.json: no such file` → 手順2の認証情報コピーを実行
+- `Permission denied` → GCPプロジェクトでVertex AI APIが有効か確認
+
+### ADC認証情報の再取得
+
+認証エラーが続く場合：
+
+```bash
+# 再度ADCを取得
+gcloud auth application-default login
+
+# 認証情報を再コピー
+cp ~/.config/gcloud/application_default_credentials.json backend/
+
+# Dockerサービスを再起動
+docker-compose restart backend
+```
 
 ---
 
@@ -256,7 +253,8 @@ make frontend-check
 
 - **初回起動は時間がかかります**: 依存関係のダウンロードに5-10分かかることがあります
 - **ホットリロード対応**: コードを変更すると自動的に再読み込みされます
-- **API制限に注意**: Gemini APIには無料枠の制限があります（1分あたり15リクエスト）
+- **認証情報の管理**: `application_default_credentials.json` は機密情報です。Gitにコミットしないでください（.gitignoreで除外済み）
+- **Vertex AI料金**: 無料枠がありますが、使用量に応じて課金される場合があります。[料金ページ](https://cloud.google.com/vertex-ai/pricing)を確認してください
 - **教育目的での使用**: 実際のSNSでの悪用は厳禁です
 
 ---
