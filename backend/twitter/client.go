@@ -1,9 +1,15 @@
 package twitter
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/dghubble/go-twitter/twitter"
@@ -13,6 +19,8 @@ import (
 const (
 	// MaxTweetLength is the maximum length of a tweet in characters
 	MaxTweetLength = 280
+	// MediaUploadURL is the Twitter Media Upload API endpoint
+	MediaUploadURL = "https://upload.twitter.com/1.1/media/upload.json"
 )
 
 // Client represents a Twitter API client
@@ -22,13 +30,22 @@ type Client struct {
 	accessToken       string
 	accessTokenSecret string
 	twitterClient     *twitter.Client
-	mockMode          bool // If true, use mock responses for testing
+	httpClient        *http.Client // OAuth1-authenticated HTTP client
+	mockMode          bool         // If true, use mock responses for testing
 }
 
 // TweetResult represents the result of posting a tweet
 type TweetResult struct {
 	ID  string
 	URL string
+}
+
+// mediaUploadResponse represents the response from Twitter Media Upload API
+type mediaUploadResponse struct {
+	MediaID       int64  `json:"media_id"`
+	MediaIDString string `json:"media_id_string"`
+	Size          int    `json:"size"`
+	ExpiresAfter  int    `json:"expires_after_secs"`
 }
 
 // NewClient creates a new Twitter API client
@@ -41,11 +58,12 @@ func NewClient(apiKey, apiSecret, accessToken, accessTokenSecret string) (*Clien
 	mockMode := apiKey == "test-api-key" || apiKey == "test-key"
 
 	var twitterClient *twitter.Client
+	var httpClient *http.Client
 	if !mockMode {
 		// Create OAuth1 config
 		config := oauth1.NewConfig(apiKey, apiSecret)
 		token := oauth1.NewToken(accessToken, accessTokenSecret)
-		httpClient := config.Client(oauth1.NoContext, token)
+		httpClient = config.Client(oauth1.NoContext, token)
 
 		// Create Twitter client
 		twitterClient = twitter.NewClient(httpClient)
@@ -57,6 +75,7 @@ func NewClient(apiKey, apiSecret, accessToken, accessTokenSecret string) (*Clien
 		accessToken:       accessToken,
 		accessTokenSecret: accessTokenSecret,
 		twitterClient:     twitterClient,
+		httpClient:        httpClient,
 		mockMode:          mockMode,
 	}, nil
 }
@@ -145,20 +164,58 @@ func WithDisclaimer() TweetOption {
 }
 
 // uploadMedia uploads image data to Twitter and returns a media ID
-func (*Client) uploadMedia(_ context.Context, imageData []byte) (string, error) {
+func (c *Client) uploadMedia(ctx context.Context, imageData []byte) (string, error) {
 	// Validate input
 	if len(imageData) == 0 {
 		return "", errors.New("image data cannot be empty")
 	}
 
-	// Note: The go-twitter library doesn't directly support Media Upload API
-	// For now, we'll return a mock media ID to maintain backward compatibility
-	// In production, you would need to use a different library or implement the Media Upload API manually
-	// See: https://developer.twitter.com/en/docs/twitter-api/v1/media/upload-media/overview
+	// If in mock mode, return mock media ID
+	if c.mockMode {
+		return "mock-media-id-123456789", nil
+	}
 
-	// TODO: Implement actual media upload using Twitter Media Upload API v1.1
-	// This requires multipart/form-data upload which is not supported by go-twitter
-	return "mock-media-id-123456789", nil
+	// Base64 encode the image data
+	encodedData := base64.StdEncoding.EncodeToString(imageData)
+
+	// Prepare form data
+	formData := url.Values{}
+	formData.Set("media_data", encodedData)
+	formData.Set("media_category", "tweet_image")
+
+	// Create HTTP request with context
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, MediaUploadURL, bytes.NewBufferString(formData.Encode()))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Send request using OAuth1-authenticated HTTP client
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to upload media: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response: %w", err)
+	}
+
+	// Check HTTP status
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("media upload failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse JSON response
+	var uploadResp mediaUploadResponse
+	if err := json.Unmarshal(body, &uploadResp); err != nil {
+		return "", fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return uploadResp.MediaIDString, nil
 }
 
 // postTweetWithMediaID posts a tweet with an attached media ID
