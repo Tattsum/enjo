@@ -1,0 +1,153 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    "schedule:officeHours",
+    ":timezone(Asia/Tokyo)"
+  ],
+  "prHourlyLimit": 0,
+  "labels": [
+    "dependencies"
+  ],
+  "minimumReleaseAge": "3 days",
+  "internalChecksAsSuccess": true,
+  "assignAutomerge": true,
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "labels": [
+        "go",
+        "dependencies"
+      ],
+      "groupName": "go dependencies"
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "labels": [
+        "npm",
+        "dependencies"
+      ]
+    },
+    {
+      "groupName": "google-cloud-go-packages",
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchPackageNames": [
+        "/^cloud\\.google\\.com\\/go\\/.*$/",
+        "/^google\\.golang\\.org\\/.*$/"
+      ],
+      "separateMajorMinor": false
+    },
+    {
+      "groupName": "next-and-react",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchPackageNames": [
+        "next",
+        "react",
+        "react-dom",
+        "eslint-config-next"
+      ],
+      "separateMajorMinor": false
+    },
+    {
+      "groupName": "typescript-eslint",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchPackageNames": [
+        "@typescript-eslint/eslint-plugin",
+        "@typescript-eslint/parser"
+      ],
+      "separateMajorMinor": false
+    },
+    {
+      "groupName": "testing-library",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchPackageNames": [
+        "@testing-library/jest-dom",
+        "@testing-library/react",
+        "@testing-library/user-event"
+      ],
+      "separateMajorMinor": false
+    },
+    {
+      "groupName": "apollo-graphql",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchPackageNames": [
+        "@apollo/client",
+        "graphql"
+      ],
+      "separateMajorMinor": false
+    },
+    {
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchDepNames": [
+        "golang"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true
+    },
+    {
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchDepNames": [
+        "node"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "prCreation": "status-success"
+    },
+    {
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "automerge": true
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^Makefile$"
+      ],
+      "matchStrings": [
+        "GOLANGCI_LINT_VERSION := (?<currentValue>v?\\d+\\.\\d+\\.\\d+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "golangci/golangci-lint"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true
+  }
+}
