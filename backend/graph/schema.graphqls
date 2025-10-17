@@ -50,6 +50,7 @@ type TwitterPostResult {
 
 input GenerateImageInput {
   text: String!
+  originalText: String # Optional: original text before inflammatory conversion
   style: ImageStyle
   aspectRatio: AspectRatio
 }

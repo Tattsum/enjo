@@ -73,11 +73,12 @@ func TestBuildImagePromptTemplate(t *testing.T) {
 		if !strings.Contains(prompt, text) {
 			t.Errorf("expected prompt to contain text %q", text)
 		}
-		if !strings.Contains(prompt, "炎") {
-			t.Error("expected prompt to mention fire/flames (炎)")
+		// Updated to match new prompt template (social media friendly, colorful)
+		if !strings.Contains(prompt, "social media") && !strings.Contains(prompt, "Social media") {
+			t.Error("expected prompt to mention social media")
 		}
-		if !strings.Contains(prompt, "SNS") {
-			t.Error("expected prompt to mention SNS")
+		if !strings.Contains(prompt, "English") {
+			t.Error("expected prompt to request English output")
 		}
 	})
 }

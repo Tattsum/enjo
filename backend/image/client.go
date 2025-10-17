@@ -10,12 +10,16 @@ import (
 )
 
 const (
-	// Default model for image generation
-	defaultImageModel = "imagen-3.0-generate-001"
+	// Default model for image generation (Imagen 2)
+	// Note: As of 2024, Imagen 2 is available as "imagegeneration@006"
+	// Imagen 3 may not be available in all regions/projects yet
+	defaultImageModel = "imagegeneration@002"
 	// Default aspect ratio (1:1 for Twitter)
 	defaultAspectRatio = "1:1"
 	// Default location for Vertex AI
 	defaultLocation = "us-central1"
+	// Default number of images to generate
+	defaultSampleCount = 1
 )
 
 // Client is a Vertex AI client for generating images using Imagen
@@ -87,32 +91,46 @@ func (c *Client) GenerateImage(ctx context.Context, prompt string, options ...Op
 		opt(opts)
 	}
 
-	// Get the Imagen model
-	model := c.client.GenerativeModel(defaultImageModel)
+	// Add style to the prompt if specified
+	enhancedPrompt := prompt
+	if opts.style != "" {
+		enhancedPrompt = prompt + getStyleHint(opts.style)
+	}
 
-	// Build the generation request
-	// Note: The actual Imagen API might have different parameters
-	// This is a simplified implementation based on the genai package
-	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
+	// Generate the image using REST API
+	// The current genai SDK doesn't fully support Imagen API
+	imageDataBase64, err := c.generateImageViaREST(ctx, enhancedPrompt, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate image: %w", err)
 	}
 
-	// Extract image data from response
-	// In a real implementation, we would extract the actual image bytes
-	// For now, we'll create a placeholder to pass tests
-	imageData := extractImageDataFromResponse(resp)
-	if len(imageData) == 0 {
+	if len(imageDataBase64) == 0 {
 		return nil, errors.New("no image data generated")
 	}
 
 	result := &Result{
-		ImageData:   imageData,
+		ImageData:   imageDataBase64, // Base64 encoded
 		Prompt:      prompt,
 		GeneratedAt: time.Now(),
 	}
 
 	return result, nil
+}
+
+// getStyleHint returns the style hint for the given style
+func getStyleHint(style string) string {
+	switch style {
+	case "REALISTIC":
+		return ", photorealistic, detailed, high quality"
+	case "ILLUSTRATION":
+		return ", illustration, artistic, colorful"
+	case "MEME":
+		return ", meme style, funny, internet culture"
+	case "DRAMATIC":
+		return ", dramatic lighting, cinematic, intense"
+	default:
+		return ", " + style
+	}
 }
 
 // WithStyle sets the image style (e.g., "realistic", "illustration", "meme", "dramatic")
@@ -137,15 +155,5 @@ func WithSize(width, height int) Option {
 	}
 }
 
-// extractImageDataFromResponse extracts image data from the response
-// This is a placeholder implementation
-func extractImageDataFromResponse(resp *genai.GenerateContentResponse) []byte {
-	if resp == nil {
-		return nil
-	}
-
-	// In a real implementation, we would extract actual image bytes
-	// For now, return a placeholder to make tests pass
-	// The actual Imagen API returns image data differently
-	return []byte("placeholder-image-data")
-}
+// NOTE: extractImageDataFromResponse is no longer used
+// We now use REST API which returns base64 encoded data directly

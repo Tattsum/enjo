@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"cloud.google.com/go/vertexai/genai"
@@ -14,7 +15,7 @@ const (
 	defaultTemperature    = 0.9
 	defaultTopK           = 40
 	defaultTopP           = 0.95
-	defaultMaxOutputToken = 1024
+	defaultMaxOutputToken = 2048 // Increased from 1024 to avoid FinishReasonMaxTokens
 	defaultModel          = "gemini-2.5-flash"
 )
 
@@ -124,8 +125,21 @@ func (c *Client) generate(ctx context.Context, prompt, emptyResultMsg string) (s
 		return "", fmt.Errorf("failed to generate content: %w", err)
 	}
 
+	// Debug: Check for safety ratings
+	const finishReasonSafety = 3
+	if len(resp.Candidates) > 0 && resp.Candidates[0].FinishReason != 0 {
+		log.Printf("WARNING: Content generation finished with reason: %v (prompt length: %d chars)",
+			resp.Candidates[0].FinishReason, len(prompt))
+		if resp.Candidates[0].FinishReason == finishReasonSafety {
+			log.Print("Content blocked by safety filter")
+		}
+	}
+
 	result := extractTextFromResponse(resp)
 	if result == "" {
+		// Debug: Log more details about the empty response
+		log.Printf("WARNING: Empty response from Gemini API. Candidates: %d, Prompt preview: %.100s...",
+			len(resp.Candidates), prompt)
 		return "", errors.New(emptyResultMsg)
 	}
 

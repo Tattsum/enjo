@@ -12,11 +12,13 @@ import {
 
 interface ImageGeneratorProps {
   inflammatoryText: string
+  originalText?: string // Optional: original text before inflammatory conversion
   onImageGenerated?: (imageUrl: string) => void
 }
 
 const ImageGenerator: React.FC<ImageGeneratorProps> = ({
   inflammatoryText,
+  originalText,
   onImageGenerated,
 }) => {
   const [style, setStyle] = useState<ImageStyle>(ImageStyle.MEME)
@@ -45,6 +47,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
       variables: {
         input: {
           text: inflammatoryText,
+          originalText, // Pass original text to avoid content policy issues
           style,
           aspectRatio,
         },

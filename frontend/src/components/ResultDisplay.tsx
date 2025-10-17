@@ -109,6 +109,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
         {!generatedImageUrl ? (
           <ImageGenerator
             inflammatoryText={result.inflammatory}
+            originalText={result.original}
             onImageGenerated={handleImageGenerated}
           />
         ) : (

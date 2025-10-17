@@ -151,8 +151,14 @@ func (r *mutationResolver) GenerateImage(ctx context.Context, input model.Genera
 		return nil, fmt.Errorf("text is required")
 	}
 
+	// Use original text if provided (safer for content policy), otherwise use inflammatory text
+	textForPrompt := input.Text
+	if input.OriginalText != nil && *input.OriginalText != "" {
+		textForPrompt = *input.OriginalText
+	}
+
 	// Generate image prompt using Gemini
-	imagePrompt, err := generateImagePromptFromText(ctx, r.geminiClient, input.Text)
+	imagePrompt, err := generateImagePromptFromText(ctx, r.geminiClient, textForPrompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate image prompt: %w", err)
 	}

@@ -10,9 +10,10 @@ import (
 )
 
 type GenerateImageInput struct {
-	Text        string       `json:"text"`
-	Style       *ImageStyle  `json:"style,omitempty"`
-	AspectRatio *AspectRatio `json:"aspectRatio,omitempty"`
+	Text         string       `json:"text"`
+	OriginalText *string      `json:"originalText,omitempty"`
+	Style        *ImageStyle  `json:"style,omitempty"`
+	AspectRatio  *AspectRatio `json:"aspectRatio,omitempty"`
 }
 
 type GenerateImageResult struct {

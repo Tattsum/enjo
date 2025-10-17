@@ -477,19 +477,31 @@ GCS_BUCKET_NAME=enjo-generated-images
      - TwitterPostInput 型定義更新
      - 画像付き投稿に対応
 
-### Phase 5: E2Eテスト ✅ 完了
+### Phase 5: E2Eテスト ✅ 完了（2025-10-17）
 
 8. **統合テスト**
    - [x] バックエンド統合テスト
-     - `backend/image/integration_test.go` - Imagen API統合テスト
-     - `backend/graph/integration_test.go` - GraphQL API統合テスト
-     - `backend/INTEGRATION_TEST_README.md` - 統合テスト実行ガイド
+     - `backend/image/integration_test.go` - Imagen API統合テスト（229行）
+       - 完全な画像生成フロー、スタイルオプション、並行処理、エラーハンドリング、パフォーマンステスト
+     - `backend/graph/integration_test.go` - GraphQL API統合テスト（350行）
+       - GraphQL generateImage完全フロー、異なるスタイル・アスペクト比、Twitter統合準備
+     - `backend/INTEGRATION_TEST_README.md` - 統合テスト実行ガイド（430行）
    - [x] フロントエンド統合テスト
-     - `frontend/src/components/__tests__/ImageGenerationFlow.integration.test.tsx` - 画像生成フロー統合テスト
+     - `frontend/src/components/__tests__/ImageGenerationFlow.integration.test.tsx` - 画像生成フロー統合テスト（374行）
+       - 13テストケース: ワークフロー、スタイル選択、エラーハンドリング、画像プレビュー、パフォーマンス、アクセシビリティ、データ検証
    - [x] テスト品質確認
      - バックエンド: すべてのテストがパス（`make backend-check`）
-     - フロントエンド: 既存テスト77個すべてパス
+     - フロントエンド: 84テスト全合格（`npm run test`）
      - カバレッジ: twitter 89.8%, graph 47.3%, image 53.1%
+   - [x] REST API実装
+     - `backend/image/rest_client.go` - Imagen REST API直接呼び出し（125行）
+     - genai SDK非対応のため、OAuth2 + HTTP POST実装
+     - Model: `imagegeneration@002` (Imagen 2) 使用
+   - [x] ドキュメント整備
+     - `LOCAL_SETUP.md` - ローカル開発環境セットアップガイド
+     - `QUICKSTART.md` - クイックスタートガイド
+     - `IMAGEN_SETUP.md` - Imagen APIトラブルシューティング
+     - `PHASE5_COMPLETION_SUMMARY.md` - Phase 5完了サマリー
 
 ## パフォーマンス最適化
 

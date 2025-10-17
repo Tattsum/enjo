@@ -27,7 +27,7 @@ backend-lint: ## Run backend linter
 	cd backend && golangci-lint run --fix ./...
 
 backend-fmt: ## Format backend code
-	cd backend && golangci-lint fmt ./...
+	cd backend && golangci-lint run --fix
 
 backend-tidy: ## Tidy backend dependencies
 	cd backend && go mod tidy

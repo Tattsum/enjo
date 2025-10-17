@@ -119,6 +119,7 @@ export const GENERATE_IMAGE = gql`
 
 export interface GenerateImageInput {
   text: string
+  originalText?: string // Optional: original text before inflammatory conversion
   style?: ImageStyle
   aspectRatio?: AspectRatio
 }
