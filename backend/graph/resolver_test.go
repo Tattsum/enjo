@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Tattsum/enjo/backend/graph/model"
+	"github.com/Tattsum/enjo/backend/twitter"
 )
 
 // MockGeminiClient is a mock implementation of the Gemini client for testing
@@ -53,6 +54,26 @@ type MockImageClient struct {
 func (m *MockImageClient) GenerateImage(ctx context.Context, prompt string) ([]byte, error) {
 	if m.GenerateImageFunc != nil {
 		return m.GenerateImageFunc(ctx, prompt)
+	}
+	return nil, errors.New("not implemented")
+}
+
+// MockTwitterClient is a mock implementation of the Twitter client for testing
+type MockTwitterClient struct {
+	PostTweetFunc          func(ctx context.Context, text string) (*twitter.TweetResult, error)
+	PostTweetWithImageFunc func(ctx context.Context, text string, imageData []byte) (*twitter.TweetResult, error)
+}
+
+func (m *MockTwitterClient) PostTweet(ctx context.Context, text string, _ ...twitter.TweetOption) (*twitter.TweetResult, error) {
+	if m.PostTweetFunc != nil {
+		return m.PostTweetFunc(ctx, text)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *MockTwitterClient) PostTweetWithImage(ctx context.Context, text string, imageData []byte, _ ...twitter.TweetOption) (*twitter.TweetResult, error) {
+	if m.PostTweetWithImageFunc != nil {
+		return m.PostTweetWithImageFunc(ctx, text, imageData)
 	}
 	return nil, errors.New("not implemented")
 }

@@ -36,6 +36,7 @@ enum ReplyType {
 
 input TwitterPostInput {
   text: String!
+  imageUrl: String
   addHashtag: Boolean
   addDisclaimer: Boolean
 }

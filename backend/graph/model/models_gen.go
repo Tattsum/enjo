@@ -44,9 +44,10 @@ type Reply struct {
 }
 
 type TwitterPostInput struct {
-	Text          string `json:"text"`
-	AddHashtag    *bool  `json:"addHashtag,omitempty"`
-	AddDisclaimer *bool  `json:"addDisclaimer,omitempty"`
+	Text          string  `json:"text"`
+	ImageURL      *string `json:"imageUrl,omitempty"`
+	AddHashtag    *bool   `json:"addHashtag,omitempty"`
+	AddDisclaimer *bool   `json:"addDisclaimer,omitempty"`
 }
 
 type TwitterPostResult struct {

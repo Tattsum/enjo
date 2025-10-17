@@ -21,6 +21,7 @@ type GeminiClient interface {
 // TwitterClient is the interface for Twitter API client
 type TwitterClient interface {
 	PostTweet(ctx context.Context, text string, options ...twitter.TweetOption) (*twitter.TweetResult, error)
+	PostTweetWithImage(ctx context.Context, text string, imageData []byte, options ...twitter.TweetOption) (*twitter.TweetResult, error)
 }
 
 // ImageClient is the interface for Image generation client

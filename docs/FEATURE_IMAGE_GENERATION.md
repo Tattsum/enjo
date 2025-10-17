@@ -434,12 +434,16 @@ GCS_BUCKET_NAME=enjo-generated-images
      - すべてのテストがパス（`make backend-check`）
    - [x] コードカバレッジ: 63.6%
 
-### Phase 3: Twitter連携
+### Phase 3: Twitter連携 ✅ 完了
 
-4. **Twitter画像投稿**
-   - [ ] テスト作成: `backend/twitter/media_test.go`
-   - [ ] メディアアップロード実装
-   - [ ] 画像付き投稿実装
+4. **Twitter画像投稿** ✅
+   - [x] テスト作成: `backend/twitter/media_test.go`
+   - [x] メディアアップロード実装
+   - [x] 画像付き投稿実装
+   - [x] GraphQLスキーマ拡張（TwitterPostInputにimageUrlフィールド追加）
+   - [x] PostToTwitterリゾルバーの画像対応
+   - [x] すべてのテストがパス（`make backend-check`）
+   - [x] カバレッジ: twitter 89.8%
 
 ### Phase 4: フロントエンド
 
@@ -607,7 +611,7 @@ $ make backend-check
 3. **自動化**: Gemini → Imagen → Twitter の完全自動フロー
 4. **拡張性**: 将来的な画像編集・スタイル選択への拡張が容易
 
-### 現在の実装状況（2025-10-17）
+### 現在の実装状況（2025-10-17更新）
 
 - ✅ **Phase 1**: バックエンド基盤（完了）
   - Imagenクライアント実装
@@ -615,17 +619,26 @@ $ make backend-check
   - すべてのテストがパス
 
 - ✅ **Phase 2**: GraphQL API統合（完了）
-  - GraphQLスキーマ拡張
+  - GraphQLスキーマ拡張（generateImageミューテーション）
   - リゾルバー実装
   - main.goへの統合
   - すべてのテストがパス（`make backend-check`）
 
-- ⏳ **Phase 3**: Twitter連携（未着手）
-  - 画像付き投稿機能の実装が必要
+- ✅ **Phase 3**: Twitter連携（完了）
+  - `backend/twitter/media_test.go` - メディアアップロードテスト作成
+  - `backend/twitter/client.go` - 画像付き投稿機能実装
+    - `uploadMedia` メソッド
+    - `postTweetWithMediaID` メソッド
+    - `PostTweetWithImage` 公開メソッド
+  - GraphQLスキーマ拡張（TwitterPostInputにimageUrlフィールド追加）
+  - PostToTwitterリゾルバーの画像対応
+  - `backend/graph/helpers.go` - `extractImageDataFromURL` 関数追加
+  - すべてのテストがパス（`make backend-check`）
+  - カバレッジ: twitter 89.8%, graph 47.3%
 
 - ⏳ **Phase 4**: フロントエンド（未着手）
   - ImageGeneratorコンポーネント
   - ImagePreviewコンポーネント
   - GraphQLクエリ統合
 
-TDDに従い、小さく作って育てる方針で段階的に実装しました。Phase 1とPhase 2は完全にテスト駆動で実装され、すべてのテストがパスしています。
+TDDに従い、小さく作って育てる方針で段階的に実装しました。Phase 1, 2, 3は完全にテスト駆動（Red-Green-Refactor）で実装され、すべてのテストがパスしています。

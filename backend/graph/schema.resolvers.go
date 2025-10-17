@@ -109,8 +109,27 @@ func (r *mutationResolver) PostToTwitter(ctx context.Context, input model.Twitte
 		options = append(options, twitter.WithDisclaimer())
 	}
 
-	// Post to Twitter
-	result, err := r.twitterClient.PostTweet(ctx, input.Text, options...)
+	// Check if image URL is provided
+	var result *twitter.TweetResult
+	var err error
+
+	if input.ImageURL != nil && *input.ImageURL != "" {
+		// Extract image data from data URL
+		imageData, extractErr := extractImageDataFromURL(*input.ImageURL)
+		if extractErr != nil {
+			return &model.TwitterPostResult{
+				Success:      false,
+				ErrorMessage: stringPtr(fmt.Sprintf("画像データの取得に失敗しました: %v", extractErr)),
+			}, nil
+		}
+
+		// Post with image
+		result, err = r.twitterClient.PostTweetWithImage(ctx, input.Text, imageData, options...)
+	} else {
+		// Post without image
+		result, err = r.twitterClient.PostTweet(ctx, input.Text, options...)
+	}
+
 	if err != nil {
 		return &model.TwitterPostResult{
 			Success:      false,

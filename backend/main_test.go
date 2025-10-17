@@ -41,6 +41,13 @@ func (*MockTwitterClient) PostTweet(_ context.Context, _ string, _ ...twitter.Tw
 	}, nil
 }
 
+func (*MockTwitterClient) PostTweetWithImage(_ context.Context, _ string, _ []byte, _ ...twitter.TweetOption) (*twitter.TweetResult, error) {
+	return &twitter.TweetResult{
+		ID:  "mock-tweet-id-with-image",
+		URL: "https://twitter.com/user/status/mock-tweet-id-with-image",
+	}, nil
+}
+
 // MockImageClient for testing
 type MockImageClient struct{}
 
