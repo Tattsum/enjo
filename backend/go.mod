@@ -3,7 +3,7 @@ module github.com/Tattsum/enjo/backend
 go 1.25.2
 
 require (
-	cloud.google.com/go/vertexai v0.15.0
+	cloud.google.com/go/vertexai v0.19.0
 	github.com/99designs/gqlgen v0.17.81
 	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b
 	github.com/dghubble/oauth1 v0.7.3
