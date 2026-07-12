@@ -4,14 +4,14 @@ go 1.25.2
 
 require (
 	cloud.google.com/go/vertexai v0.15.0
-	github.com/99designs/gqlgen v0.17.81
+	github.com/99designs/gqlgen v0.17.94
 	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b
 	github.com/dghubble/oauth1 v0.7.3
-	github.com/go-chi/chi/v5 v5.2.3
+	github.com/go-chi/chi/v5 v5.3.1
 	github.com/go-chi/cors v1.2.2
 	github.com/joho/godotenv v1.5.1
-	github.com/vektah/gqlparser/v2 v2.5.30
-	golang.org/x/oauth2 v0.31.0
+	github.com/vektah/gqlparser/v2 v2.5.36
+	golang.org/x/oauth2 v0.36.0
 )
 
 require (
